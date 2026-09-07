@@ -459,14 +459,16 @@ class SSATApp {
       this.lastGeneratedCustomSet = generatedSet;
 
       // Save generated words into customVocabCards
+      const currentDateStr = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
       generatedSet.forEach(q => {
         const word = (q.targetWord || q.stem || '').split(':')[0].trim().toUpperCase();
         if (word && !this.customVocabCards.some(v => v.word.toUpperCase() === word)) {
           this.customVocabCards.push({
             word: word,
             definition: q.explanation || 'Custom Vocabulary Word',
-            pos: q.type === 'synonym' ? 'SYNONYM' : 'ANALOGY',
-            synonyms: q.options ? q.options.slice(0, 3) : []
+            pos: q.type === 'synonym' ? 'Synonym' : 'Analogy',
+            synonyms: q.options ? q.options.slice(0, 3) : [],
+            dateAdded: currentDateStr
           });
         }
       });
@@ -582,6 +584,7 @@ class SSATApp {
     let skippedCount = 0;
 
     try {
+      const currentDateStr = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
       for (const word of parsedWords) {
         const upperWord = word.toUpperCase();
         // Check deduplication
@@ -597,7 +600,8 @@ class SSATApp {
             definition: mwRes.definition,
             pos: mwRes.pos || 'Noun',
             phonetic: mwRes.phonetic || '',
-            synonyms: mwRes.synonyms || []
+            synonyms: mwRes.synonyms || [],
+            dateAdded: currentDateStr
           });
           addedCount++;
         }
@@ -747,6 +751,8 @@ class SSATApp {
       const synTags = (v.synonyms || []).map(s => `<span class="syn-tag">${s}</span>`).join("");
       const phoneticText = v.phonetic ? `<div class="card-phonetic">${v.phonetic}</div>` : "";
 
+      const dateText = v.dateAdded || new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
       card.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
           <span class="card-pos" style="margin-bottom: 0;">${v.pos || 'Word'}</span>
@@ -759,6 +765,7 @@ class SSATApp {
         ${phoneticText}
         <div class="card-def">${v.definition}</div>
         ${synTags ? `<div class="card-syns">${synTags}</div>` : ''}
+        <div class="card-footer-date"><i class="fa-regular fa-calendar-days"></i> Added: ${dateText}</div>
       `;
 
       card.querySelector(".audio-btn").addEventListener("click", (e) => {
