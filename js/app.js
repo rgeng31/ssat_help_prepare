@@ -1148,17 +1148,52 @@ class SSATApp {
       this.dailyDeck = savedState.cards;
       this.dailyIndex = Math.min(savedState.currentIndex || 0, this.dailyDeck.length - 1);
     } else {
-      // Prioritize Don't Know (learning) -> Uncategorized -> Know (mastered)
+      // 1. Filter pools: Don't Know (learning), Uncategorized, and Know (mastered)
       const dontKnowPool = sourcePool.filter(v => v.status === 'learning');
       const uncategorizedPool = sourcePool.filter(v => !v.status || v.status === 'uncategorized');
       const knowPool = sourcePool.filter(v => v.status === 'mastered');
 
-      const shuffledDontKnow = this.seededShuffle(dontKnowPool, todayStr + "-learning");
+      // Shuffle each pool deterministically for today's date
+      const shuffledDontKnow = this.seededShuffle(dontKnowPool, todayStr + "-dontknow");
       const shuffledUncategorized = this.seededShuffle(uncategorizedPool, todayStr + "-uncat");
-      const shuffledKnow = this.seededShuffle(knowPool, todayStr + "-mastered");
+      const shuffledKnow = this.seededShuffle(knowPool, todayStr + "-know");
 
-      const prioritizedPool = [...shuffledDontKnow, ...shuffledUncategorized, ...shuffledKnow];
-      this.dailyDeck = prioritizedPool.slice(0, 100);
+      const targetTotal = Math.min(100, sourcePool.length);
+      
+      // Target 2/3 (~67%) Don't Know and 1/3 (~33%) Uncategorized
+      let quotaDontKnow = Math.round(targetTotal * (2 / 3));
+      let quotaUncat = targetTotal - quotaDontKnow;
+
+      // Available counts up to target quotas
+      let countDontKnow = Math.min(quotaDontKnow, shuffledDontKnow.length);
+      let countUncat = Math.min(quotaUncat, shuffledUncategorized.length);
+
+      // Spillover balancing between Don't Know and Uncategorized
+      const uncatNeed = quotaUncat - countUncat;
+      if (uncatNeed > 0) {
+        const extraDontKnow = Math.min(uncatNeed, shuffledDontKnow.length - countDontKnow);
+        countDontKnow += extraDontKnow;
+      }
+
+      const dontKnowNeed = quotaDontKnow - countDontKnow;
+      if (dontKnowNeed > 0) {
+        const extraUncat = Math.min(dontKnowNeed, shuffledUncategorized.length - countUncat);
+        countUncat += extraUncat;
+      }
+
+      const selectedPrimary = [
+        ...shuffledDontKnow.slice(0, countDontKnow),
+        ...shuffledUncategorized.slice(0, countUncat)
+      ];
+
+      // Fill remaining shortfall with Know (mastered) cards
+      const shortfall = targetTotal - selectedPrimary.length;
+      const selectedKnow = shuffledKnow.slice(0, shortfall);
+
+      const combinedSelection = [...selectedPrimary, ...selectedKnow];
+
+      // Final shuffle of today's deck so cards are smoothly mixed
+      this.dailyDeck = this.seededShuffle(combinedSelection, todayStr + "-mix");
       this.dailyIndex = 0;
       this.saveDailyState();
     }
