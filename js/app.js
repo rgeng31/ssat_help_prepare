@@ -28,7 +28,12 @@ class SSATApp {
   loadCustomVocabCards() {
     const saved = localStorage.getItem("ssat_custom_vocab_cards");
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
+      try {
+        let list = JSON.parse(saved);
+        if (Array.isArray(list)) {
+          return list.filter(v => v && v.definition && !v.definition.startsWith("Definition unavailable") && !v.definition.includes("is a key SSAT vocabulary word"));
+        }
+      } catch (e) {}
     }
     return [];
   }
@@ -594,16 +599,8 @@ class SSATApp {
             phonetic: mwRes.phonetic || '',
             synonyms: mwRes.synonyms || []
           });
-        } else {
-          this.customVocabCards.push({
-            word: upperWord,
-            definition: `Definition unavailable for ${upperWord}.`,
-            pos: 'Word',
-            phonetic: '',
-            synonyms: []
-          });
+          addedCount++;
         }
-        addedCount++;
       }
       this.saveCustomVocabCards();
       this.renderVocabCards();

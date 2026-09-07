@@ -22,49 +22,87 @@ class QuestionGenerator {
       .filter(w => w.length > 1);
   }
 
-  // Fetch first definition from Merriam-Webster Dictionary API
+  // Fetch definition, part of speech, pronunciation, and synonyms from Merriam-Webster Dictionary API (with secondary fallback)
   async fetchMWDefinition(word, apiKey = this.mwApiKey) {
-    const keyToUse = apiKey || this.mwApiKey;
-    if (!keyToUse) return null;
+    const keyToUse = apiKey || this.mwApiKey || "01b4423c-9962-4ee3-a303-78d52036cdfd";
+    const cleanWord = word.toLowerCase().trim();
+
+    // 1. Primary: Merriam-Webster Collegiate API
+    if (keyToUse) {
+      try {
+        const url = `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${encodeURIComponent(cleanWord)}?key=${encodeURIComponent(keyToUse.trim())}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (Array.isArray(data) && data.length > 0) {
+          const entry = data.find(item => typeof item === 'object' && item.shortdef && item.shortdef.length > 0) || data[0];
+          if (typeof entry === 'object' && entry.shortdef && entry.shortdef.length > 0) {
+            const rawDef = entry.shortdef[0];
+            const cleanDef = rawDef.replace(/\{[^}]+\}/g, '').trim();
+            
+            // Format Part of Speech (e.g. 'noun' -> 'Noun', 'adjective' -> 'Adjective')
+            let rawFl = entry.fl || 'Noun';
+            let pos = rawFl.charAt(0).toUpperCase() + rawFl.slice(1).toLowerCase();
+
+            // Extract Phonetic Pronunciation (e.g. 'ˈplī-ə-bəl')
+            let phonetic = '';
+            if (entry.hwi && entry.hwi.prs && entry.hwi.prs.length > 0 && entry.hwi.prs[0].mw) {
+              phonetic = `${entry.hwi.prs[0].mw}`;
+            } else if (entry.hwi && entry.hwi.hw) {
+              phonetic = `${entry.hwi.hw.replace(/\*/g, '·')}`;
+            }
+
+            // Extract Synonyms
+            let synonyms = [];
+            if (entry.meta && entry.meta.syns && entry.meta.syns.length > 0 && Array.isArray(entry.meta.syns[0])) {
+              synonyms = entry.meta.syns[0].slice(0, 3);
+            }
+
+            return {
+              word: word.toUpperCase(),
+              definition: cleanDef,
+              pos: pos,
+              phonetic: phonetic,
+              synonyms: synonyms
+            };
+          }
+        }
+      } catch (err) {
+        console.warn("MW API Fetch Error for word:", word, err);
+      }
+    }
+
+    // 2. Secondary Fallback: Free Open Dictionary API
     try {
-      const cleanWord = word.toLowerCase().trim();
-      const url = `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${encodeURIComponent(cleanWord)}?key=${encodeURIComponent(keyToUse.trim())}`;
-      const res = await fetch(url);
-      const data = await res.json();
+      const freeUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`;
+      const freeRes = await fetch(freeUrl);
+      const freeData = await freeRes.json();
 
-      if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object' && data[0].shortdef && data[0].shortdef.length > 0) {
-        const rawDef = data[0].shortdef[0];
-        const cleanDef = rawDef.replace(/\{[^}]+\}/g, '').trim();
+      if (Array.isArray(freeData) && freeData.length > 0 && freeData[0].meanings && freeData[0].meanings.length > 0) {
+        const meaning = freeData[0].meanings[0];
+        const rawDef = meaning.definitions && meaning.definitions[0] ? meaning.definitions[0].definition : '';
+        const rawPos = meaning.partOfSpeech || 'noun';
+        const pos = rawPos.charAt(0).toUpperCase() + rawPos.slice(1).toLowerCase();
         
-        // Format Part of Speech (e.g. 'noun' -> 'Noun', 'adjective' -> 'Adjective')
-        let rawFl = data[0].fl || 'Noun';
-        let pos = rawFl.charAt(0).toUpperCase() + rawFl.slice(1).toLowerCase();
+        let phonetic = freeData[0].phonetic || (freeData[0].phonetics && freeData[0].phonetics[0] ? freeData[0].phonetics[0].text : '');
+        phonetic = phonetic.replace(/^\/|\/$/g, '');
 
-        // Extract Phonetic Pronunciation (e.g. 'ˈplī-ə-bəl')
-        let phonetic = '';
-        if (data[0].hwi && data[0].hwi.prs && data[0].hwi.prs.length > 0 && data[0].hwi.prs[0].mw) {
-          phonetic = `${data[0].hwi.prs[0].mw}`;
-        } else if (data[0].hwi && data[0].hwi.hw) {
-          phonetic = `${data[0].hwi.hw.replace(/\*/g, '·')}`;
+        let synonyms = meaning.synonyms ? meaning.synonyms.slice(0, 3) : [];
+
+        if (rawDef) {
+          return {
+            word: word.toUpperCase(),
+            definition: rawDef,
+            pos: pos,
+            phonetic: phonetic,
+            synonyms: synonyms
+          };
         }
-
-        // Extract Synonyms
-        let synonyms = [];
-        if (data[0].meta && data[0].meta.syns && data[0].meta.syns.length > 0 && Array.isArray(data[0].meta.syns[0])) {
-          synonyms = data[0].meta.syns[0].slice(0, 3);
-        }
-
-        return {
-          word: word.toUpperCase(),
-          definition: cleanDef,
-          pos: pos,
-          phonetic: phonetic,
-          synonyms: synonyms
-        };
       }
     } catch (err) {
-      console.warn("MW API Fetch Error for word:", word, err);
+      console.warn("Free Dictionary API Fetch Error:", word, err);
     }
+
     return null;
   }
 
