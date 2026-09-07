@@ -38,8 +38,11 @@ class SSATApp {
     return [];
   }
 
-  saveCustomVocabCards() {
+  saveCustomVocabCards(triggerDownload = true) {
     localStorage.setItem("ssat_custom_vocab_cards", JSON.stringify(this.customVocabCards));
+    if (triggerDownload && this.customVocabCards.length > 0) {
+      this.exportVocabBankToCSV(false);
+    }
   }
 
   // Load / Save Stats
@@ -155,10 +158,6 @@ class SSATApp {
 
     document.getElementById("save-vocab-cards-btn").addEventListener("click", () => {
       this.handleDirectVocabAdd();
-    });
-
-    document.getElementById("export-csv-btn").addEventListener("click", () => {
-      this.exportVocabBankToCSV();
     });
 
     document.getElementById("clear-vocab-bank-btn").addEventListener("click", () => {
@@ -570,9 +569,9 @@ class SSATApp {
   }
 
   // Export custom vocabulary bank to CSV file download
-  exportVocabBankToCSV() {
+  exportVocabBankToCSV(showAlert = false) {
     if (this.customVocabCards.length === 0) {
-      alert("Your Vocabulary Bank is currently empty. Add some vocabulary cards first before exporting!");
+      if (showAlert) alert("Your Vocabulary Bank is currently empty. Add some vocabulary cards first before exporting!");
       return;
     }
 
