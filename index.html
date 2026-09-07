@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSAT Upper Level Verbal Prep Studio</title>
+  <meta name="description" content="Master SSAT Upper Level Synonyms & Analogies with interactive practice tests, custom vocabulary question generator, flashcards, mnemonics, and printable worksheets.">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <a href="#" class="brand-logo">
+        <div class="logo-badge">SSAT</div>
+        <div>
+          <div class="brand-title">Verbal Prep Studio</div>
+          <div class="brand-tag">Upper Level Synonym & Analogy Master</div>
+        </div>
+      </a>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-target="pane-quiz">
+          <i class="fa-solid fa-pen-to-square"></i> Practice Quiz
+        </button>
+        <button class="nav-tab" data-target="pane-custom">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Custom Generator
+        </button>
+        <button class="nav-tab" data-target="pane-cards">
+          <i class="fa-solid fa-cards-blank"></i> Vocabulary Cards
+        </button>
+        <button class="nav-tab" data-target="pane-analogy-guide">
+          <i class="fa-solid fa-lightbulb"></i> Analogy Guide
+        </button>
+        <button class="nav-tab" data-target="pane-analytics">
+          <i class="fa-solid fa-chart-line"></i> Analytics
+        </button>
+      </nav>
+
+      <!-- Right Header Actions -->
+      <div class="header-actions">
+        <button class="btn-icon" id="theme-toggle-btn" title="Toggle Light/Dark Theme">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+        <button class="btn-secondary" id="print-btn" title="Print Practice Worksheet">
+          <i class="fa-solid fa-print"></i> Print
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-wrapper">
+
+    <!-- 1. PRACTICE QUIZ TAB -->
+    <section id="pane-quiz" class="tab-pane active">
+      <!-- Quiz Setup Panel -->
+      <div class="setup-card no-print">
+        <div class="setup-grid">
+          <div class="form-group">
+            <label class="form-label" for="select-type">Question Type</label>
+            <select id="select-type" class="form-select">
+              <option value="mixed">Mixed (Synonyms + Analogies)</option>
+              <option value="synonym">Synonyms Only</option>
+              <option value="analogy">Analogies Only</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="select-difficulty">Difficulty</label>
+            <select id="select-difficulty" class="form-select">
+              <option value="all">All Difficulties</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="select-count">Question Count</label>
+            <select id="select-count" class="form-select">
+              <option value="5">5 Questions (Quick)</option>
+              <option value="10" selected>10 Questions (Standard)</option>
+              <option value="20">20 Questions (Extended)</option>
+              <option value="40">40 Questions (Full Section Mock)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="select-mode">Feedback Mode</label>
+            <select id="select-mode" class="form-select">
+              <option value="instant">Instant Review (Explanations On)</option>
+              <option value="exam">Exam Mode (Score at end)</option>
+            </select>
+          </div>
+
+          <button id="start-quiz-btn" class="btn-primary">
+            <i class="fa-solid fa-play"></i> Start Quiz
+          </button>
+        </div>
+      </div>
+
+      <!-- Quiz Active Card Container -->
+      <div id="quiz-card-wrapper" class="quiz-container">
+        <!-- Top Status Bar -->
+        <div class="quiz-header-bar">
+          <div class="quiz-meta">
+            <span id="badge-type" class="badge badge-synonym">SYNONYM</span>
+            <span id="badge-diff" class="badge badge-medium">MEDIUM</span>
+            <span id="question-progress-text" style="font-weight: 600; color: var(--text-secondary);">
+              Question 1 of 10
+            </span>
+          </div>
+
+          <div id="quiz-timer-display" class="quiz-timer">
+            <i class="fa-regular fa-clock"></i> <span id="timer-count">00:30</span>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar-container">
+          <div id="quiz-progress-fill" class="progress-bar-fill"></div>
+        </div>
+
+        <!-- Question Prompt Box -->
+        <div class="question-prompt-box">
+          <div id="question-instruction" class="question-instruction">
+            Choose the word closest in meaning to the word in capital letters.
+          </div>
+          <div id="question-stem" class="question-stem">PLIABLE</div>
+        </div>
+
+        <!-- Options Grid (A, B, C, D, E) -->
+        <div id="options-grid" class="options-grid">
+          <!-- Dynamically inserted choice buttons -->
+        </div>
+
+        <!-- Explanation Box (Shown in Instant Mode after answer) -->
+        <div id="explanation-box" class="explanation-box" style="display: none;">
+          <div class="exp-title">
+            <i class="fa-solid fa-circle-info"></i> Answer Explanation
+          </div>
+          <div id="exp-text" class="exp-text">
+            PLIABLE means easily bent or flexible.
+          </div>
+        </div>
+
+        <!-- Quiz Footer Navigation -->
+        <div class="quiz-footer no-print">
+          <button id="prev-q-btn" class="btn-secondary" disabled>
+            <i class="fa-solid fa-arrow-left"></i> Previous
+          </button>
+          <div style="display: flex; gap: 0.75rem;">
+            <button id="speak-word-btn" class="btn-secondary" title="Listen to Pronunciation">
+              <i class="fa-solid fa-volume-high"></i> Pronounce
+            </button>
+            <button id="next-q-btn" class="btn-primary">
+              Next Question <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quiz Results Container (Hidden until test finish) -->
+      <div id="quiz-results-wrapper" class="quiz-container results-card" style="display: none;">
+        <div class="score-circle">
+          <div id="result-score-num" class="score-number">90%</div>
+          <div class="score-label">Accuracy</div>
+        </div>
+
+        <h2 id="result-headline" class="section-title">Outstanding Performance!</h2>
+        <p id="result-subtitle" class="section-subtitle">
+          You answered <span id="result-correct-count">9</span> out of <span id="result-total-count">10</span> questions correctly.
+        </p>
+
+        <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem;">
+          <button id="retry-quiz-btn" class="btn-primary">
+            <i class="fa-solid fa-rotate-right"></i> Retake Test
+          </button>
+          <button id="review-missed-btn" class="btn-secondary">
+            <i class="fa-solid fa-list-check"></i> Review Missed Questions
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. CUSTOM GENERATOR TAB -->
+    <section id="pane-custom" class="tab-pane">
+      <div class="custom-card">
+        <h2 class="section-title">
+          <i class="fa-solid fa-wand-magic-sparkles" style="color: #a855f7;"></i> Custom Vocabulary Question Generator
+        </h2>
+        <p class="section-subtitle">
+          Paste your own list of vocabulary words below. The generator will construct SSAT-style Synonym and Analogy practice questions complete with distractors and explanations!
+        </p>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label class="form-label" for="custom-words-input">Vocabulary Words (comma, newline, or space separated)</label>
+          <textarea id="custom-words-input" class="form-textarea" rows="6" placeholder="Example: PLIABLE, ENERVATE, FLUMMOX, EXTRICATE, MULTITUDE, PRECIPITOUS..."></textarea>
+        </div>
+
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+          <button id="generate-custom-btn" class="btn-primary">
+            <i class="fa-solid fa-gear"></i> Generate SSAT Questions
+          </button>
+          <button id="load-sample-words-btn" class="btn-secondary">
+            <i class="fa-solid fa-lightbulb"></i> Load SSAT Set Sample
+          </button>
+          <button id="clear-custom-btn" class="btn-secondary">
+            <i class="fa-solid fa-trash-can"></i> Clear Input
+          </button>
+        </div>
+
+        <!-- Generated Custom Questions Preview -->
+        <div id="custom-questions-output" style="margin-top: 2.5rem; display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+            <h3 class="section-title" style="font-size: 1.25rem; margin-bottom: 0;">
+              Generated SSAT Question Set (<span id="custom-q-count">0</span> Questions)
+            </h3>
+            <div style="display: flex; gap: 0.75rem;">
+              <button id="print-custom-pdf-btn" class="btn-secondary">
+                <i class="fa-solid fa-file-pdf" style="color: #ef4444;"></i> Export / Print PDF Worksheet
+              </button>
+            </div>
+          </div>
+          
+          <div id="custom-questions-list" style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1rem;">
+            <!-- Generated interactive questions rendered here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Printable Worksheet Container (Visible during Print) -->
+      <div id="custom-printable-worksheet" class="custom-printable-worksheet">
+        <!-- Generated print content inserted here -->
+      </div>
+    </section>
+
+    <!-- 3. VOCABULARY CARDS & MNEMONICS TAB -->
+    <section id="pane-cards" class="tab-pane">
+      <div class="setup-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2 class="section-title" style="font-size: 1.4rem;">SSAT Upper Level Vocabulary Bank</h2>
+            <p class="section-subtitle" style="margin-bottom: 0;">Interactive flashcards with phonetics, definitions, and synonyms.</p>
+          </div>
+          
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <input type="text" id="vocab-search-input" class="form-input" placeholder="Search word or definition..." style="width: 250px;">
+          </div>
+        </div>
+      </div>
+
+      <div id="vocab-cards-grid" class="flashcards-grid">
+        <!-- Vocabulary cards rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- 4. ANALOGY MASTER GUIDE TAB -->
+    <section id="pane-analogy-guide" class="tab-pane">
+      <div class="custom-card">
+        <h2 class="section-title">
+          <i class="fa-solid fa-lightbulb" style="color: #fbbf24;"></i> SSAT Analogy Logic & Strategy Guide
+        </h2>
+        <p class="section-subtitle">
+          Master the 8 fundamental relationship patterns tested on the SSAT Upper Level Verbal Section.
+        </p>
+
+        <div id="analogy-types-grid" class="strategy-grid">
+          <!-- Analogy types rendered dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. ANALYTICS & REVIEW TAB -->
+    <section id="pane-analytics" class="tab-pane">
+      <div class="setup-card">
+        <h2 class="section-title">Your Performance & History</h2>
+        <p class="section-subtitle">Track your accuracy, total questions solved, and review missed questions.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+          <div class="strategy-card" style="text-align: center;">
+            <div style="font-size: 2.2rem; font-weight: 800; color: #818cf8;" id="stat-total-solved">0</div>
+            <div style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">Total Questions Solved</div>
+          </div>
+          
+          <div class="strategy-card" style="text-align: center;">
+            <div style="font-size: 2.2rem; font-weight: 800; color: #34d399;" id="stat-accuracy">0%</div>
+            <div style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">Overall Accuracy</div>
+          </div>
+          
+          <div class="strategy-card" style="text-align: center;">
+            <div style="font-size: 2.2rem; font-weight: 800; color: #fbbf24;" id="stat-streak">0</div>
+            <div style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">Current Streak</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Missed Questions Review Queue -->
+      <div class="custom-card" style="margin-top: 2rem;">
+        <h3 class="section-title" style="font-size: 1.3rem;">
+          <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> Missed Question Review Queue
+        </h3>
+        <div id="missed-queue-container" style="margin-top: 1rem;">
+          <p style="color: var(--text-secondary);">No missed questions yet! Great job practicing.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Application Scripts -->
+  <script src="config.js"></script>
+  <script src="js/data/ssatQuestions.js"></script>
+  <script src="js/data/vocabulary.js"></script>
+  <script src="js/questionGenerator.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

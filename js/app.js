@@ -1,0 +1,667 @@
+// Main Application Controller for SSAT Verbal Prep Studio
+
+class SSATApp {
+  constructor() {
+    // Application State
+    this.currentQuestions = [];
+    this.currentIndex = 0;
+    this.userAnswers = new Map(); // questionId -> selectedIndex
+    this.timerInterval = null;
+    this.secondsRemaining = 30;
+    this.quizMode = "instant"; // "instant" | "exam"
+    
+    // User Analytics State stored in localStorage
+    this.stats = this.loadStats();
+
+    this.init();
+  }
+
+  init() {
+    this.bindEvents();
+    this.renderVocabCards();
+    this.renderAnalogyGuide();
+    this.renderAnalytics();
+    this.startQuiz(); // Default initial quiz load
+  }
+
+  // Load / Save Stats
+  loadStats() {
+    const saved = localStorage.getItem("ssat_verbal_stats");
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return {
+      totalSolved: 0,
+      totalCorrect: 0,
+      streak: 0,
+      missedQuestions: []
+    };
+  }
+
+  saveStats() {
+    localStorage.setItem("ssat_verbal_stats", JSON.stringify(this.stats));
+  }
+
+  // Event Listener Bindings
+  bindEvents() {
+    // Navigation Tabs
+    document.querySelectorAll(".nav-tab").forEach(tab => {
+      tab.addEventListener("click", (e) => {
+        const targetId = tab.dataset.target;
+        document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+        
+        tab.classList.add("active");
+        document.getElementById(targetId).classList.add("active");
+      });
+    });
+
+    // Theme Toggle
+    const themeBtn = document.getElementById("theme-toggle-btn");
+    themeBtn.addEventListener("click", () => {
+      const currentTheme = document.documentElement.getAttribute("data-theme");
+      const newTheme = currentTheme === "light" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", newTheme);
+      themeBtn.innerHTML = newTheme === "light" 
+        ? '<i class="fa-solid fa-sun"></i>' 
+        : '<i class="fa-solid fa-moon"></i>';
+    });
+
+    // Print Button
+    document.getElementById("print-btn").addEventListener("click", () => {
+      window.print();
+    });
+
+    // Start Quiz Button
+    document.getElementById("start-quiz-btn").addEventListener("click", () => {
+      this.startQuiz();
+    });
+
+    // Quiz Controls
+    document.getElementById("next-q-btn").addEventListener("click", () => {
+      this.nextQuestion();
+    });
+
+    document.getElementById("prev-q-btn").addEventListener("click", () => {
+      this.prevQuestion();
+    });
+
+    // Audio Speech Pronunciation
+    document.getElementById("speak-word-btn").addEventListener("click", () => {
+      const q = this.currentQuestions[this.currentIndex];
+      if (q) {
+        const wordToSpeak = q.targetWord || q.stem.split(":")[0].trim();
+        this.speakWord(wordToSpeak);
+      }
+    });
+
+    // Retry Quiz
+    document.getElementById("retry-quiz-btn").addEventListener("click", () => {
+      this.startQuiz();
+    });
+
+    // Custom Generator Controls
+    document.getElementById("generate-custom-btn").addEventListener("click", () => {
+      this.handleCustomGeneration();
+    });
+
+    document.getElementById("load-sample-words-btn").addEventListener("click", () => {
+      const sampleText = "PLIABLE, ENERVATE, FLUMMOX, EXTRICATE, MULTITUDE, PLUNDERING, PRECIPITOUS, SUMPTUOUSNESS, QUALM, INFAMY, FATUOUS, CONVALESCENCE, REPROACH, PUGNACIOUS, TEMPORAL, CIRCUMSPECT, LADEN, PRETENTIOUS, CONFLUENCE, ANTHOLOGY, HEARTH, IMPLICATE, HILARITY, DOCILE, BOURGEOIS, WRETCHED, SERF";
+      document.getElementById("custom-words-input").value = sampleText;
+    });
+
+    document.getElementById("clear-custom-btn").addEventListener("click", () => {
+      document.getElementById("custom-words-input").value = "";
+      document.getElementById("custom-questions-output").style.display = "none";
+    });
+
+    // Vocab Search Filter
+    document.getElementById("vocab-search-input").addEventListener("input", (e) => {
+      this.renderVocabCards(e.target.value);
+    });
+
+    // Keyboard Navigation Shortcuts
+    document.addEventListener("keydown", (e) => {
+      if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
+      
+      const keyMap = { "1": 0, "2": 1, "3": 2, "4": 3, "5": 4, "a": 0, "b": 1, "c": 2, "d": 3, "e": 4 };
+      const lowerKey = e.key.toLowerCase();
+
+      if (lowerKey in keyMap) {
+        this.selectOption(keyMap[lowerKey]);
+      } else if (e.key === "ArrowRight" || e.key === "Enter") {
+        this.nextQuestion();
+      } else if (e.key === "ArrowLeft") {
+        this.prevQuestion();
+      }
+    });
+  }
+
+  // Speech Synthesis Helper
+  speakWord(text) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // Stop any active speech
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  // Start / Reset Quiz
+  startQuiz(customSet = null) {
+    document.getElementById("quiz-card-wrapper").style.display = "block";
+    document.getElementById("quiz-results-wrapper").style.display = "none";
+
+    const typeFilter = document.getElementById("select-type").value;
+    const diffFilter = document.getElementById("select-difficulty").value;
+    const count = parseInt(document.getElementById("select-count").value, 10);
+    this.quizMode = document.getElementById("select-mode").value;
+
+    let pool = customSet ? customSet : [...SSAT_QUESTIONS];
+
+    // Apply type filter
+    if (typeFilter !== "mixed") {
+      pool = pool.filter(q => q.type === typeFilter);
+    }
+
+    // Apply difficulty filter
+    if (diffFilter !== "all") {
+      pool = pool.filter(q => q.difficulty === diffFilter);
+    }
+
+    // Shuffle pool
+    pool = this.shuffleArray(pool);
+
+    // Limit count
+    this.currentQuestions = pool.slice(0, count);
+    this.currentIndex = 0;
+    this.userAnswers.clear();
+
+    if (this.currentQuestions.length === 0) {
+      alert("No questions found matching your selected filters. Resetting to all questions.");
+      this.currentQuestions = this.shuffleArray([...SSAT_QUESTIONS]).slice(0, 10);
+    }
+
+    this.renderCurrentQuestion();
+  }
+
+  // Render Question
+  renderCurrentQuestion() {
+    const q = this.currentQuestions[this.currentIndex];
+    if (!q) return;
+
+    // Reset Timer
+    this.startTimer(30);
+
+    // Update Progress
+    const total = this.currentQuestions.length;
+    const progressPercent = ((this.currentIndex + 1) / total) * 100;
+    document.getElementById("quiz-progress-fill").style.width = `${progressPercent}%`;
+    document.getElementById("question-progress-text").textContent = `Question ${this.currentIndex + 1} of ${total}`;
+
+    // Update Badges
+    const badgeType = document.getElementById("badge-type");
+    badgeType.textContent = q.type.toUpperCase();
+    badgeType.className = `badge badge-${q.type}`;
+
+    const badgeDiff = document.getElementById("badge-diff");
+    badgeDiff.textContent = q.difficulty ? q.difficulty.toUpperCase() : "MEDIUM";
+    badgeDiff.className = `badge badge-${q.difficulty || "medium"}`;
+
+    // Question Instruction & Stem
+    const instructionEl = document.getElementById("question-instruction");
+    const stemEl = document.getElementById("question-stem");
+
+    if (q.type === "synonym") {
+      instructionEl.textContent = "Choose the word or phrase closest in meaning to the word in capital letters.";
+      stemEl.textContent = q.targetWord;
+    } else {
+      instructionEl.textContent = "Choose the pair that best expresses a relationship similar to the original pair.";
+      stemEl.textContent = q.stem;
+    }
+
+    // Render 5 Choice Buttons (A, B, C, D, E)
+    const optionsGrid = document.getElementById("options-grid");
+    optionsGrid.innerHTML = "";
+    const letters = ["A", "B", "C", "D", "E"];
+
+    const hasAnswered = this.userAnswers.has(q.id);
+    const selectedIdx = this.userAnswers.get(q.id);
+
+    q.options.forEach((optText, i) => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      
+      let btnContent = `<div class="option-key">${letters[i]}</div><span>${optText}</span>`;
+      btn.innerHTML = btnContent;
+
+      if (hasAnswered) {
+        btn.classList.add("disabled");
+        if (this.quizMode === "instant") {
+          if (i === q.correctAnswer) {
+            btn.classList.add("correct");
+          } else if (i === selectedIdx) {
+            btn.classList.add("incorrect");
+          }
+        } else if (i === selectedIdx) {
+          btn.classList.add("selected");
+        }
+      } else {
+        btn.addEventListener("click", () => this.selectOption(i));
+      }
+
+      optionsGrid.appendChild(btn);
+    });
+
+    // Explanation Box
+    const expBox = document.getElementById("explanation-box");
+    if (hasAnswered && this.quizMode === "instant") {
+      expBox.style.display = "block";
+      document.getElementById("exp-text").textContent = q.explanation;
+    } else {
+      expBox.style.display = "none";
+    }
+
+    // Prev / Next Controls State
+    document.getElementById("prev-q-btn").disabled = (this.currentIndex === 0);
+    const nextBtn = document.getElementById("next-q-btn");
+    if (this.currentIndex === total - 1) {
+      nextBtn.innerHTML = 'Finish Quiz <i class="fa-solid fa-check"></i>';
+    } else {
+      nextBtn.innerHTML = 'Next Question <i class="fa-solid fa-arrow-right"></i>';
+    }
+  }
+
+  // Select Option
+  selectOption(index) {
+    const q = this.currentQuestions[this.currentIndex];
+    if (!q || this.userAnswers.has(q.id)) return;
+
+    this.userAnswers.set(q.id, index);
+    this.stopTimer();
+
+    // Re-render to show feedback
+    this.renderCurrentQuestion();
+  }
+
+  // Next Question / Finish Test
+  nextQuestion() {
+    if (this.currentIndex < this.currentQuestions.length - 1) {
+      this.currentIndex++;
+      this.renderCurrentQuestion();
+    } else {
+      this.finishQuiz();
+    }
+  }
+
+  // Previous Question
+  prevQuestion() {
+    if (this.currentIndex > 0) {
+      this.currentIndex--;
+      this.renderCurrentQuestion();
+    }
+  }
+
+  // Timer Control
+  startTimer(seconds) {
+    this.stopTimer();
+    this.secondsRemaining = seconds;
+    const timerDisplay = document.getElementById("timer-count");
+    timerDisplay.textContent = `00:${this.secondsRemaining < 10 ? '0' : ''}${this.secondsRemaining}`;
+
+    this.timerInterval = setInterval(() => {
+      this.secondsRemaining--;
+      timerDisplay.textContent = `00:${this.secondsRemaining < 10 ? '0' : ''}${this.secondsRemaining}`;
+      
+      if (this.secondsRemaining <= 0) {
+        this.stopTimer();
+        // Auto select no answer if timer runs out
+        const q = this.currentQuestions[this.currentIndex];
+        if (q && !this.userAnswers.has(q.id)) {
+          this.userAnswers.set(q.id, -1);
+          this.renderCurrentQuestion();
+        }
+      }
+    }, 1000);
+  }
+
+  stopTimer() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+  }
+
+  // Finish Quiz Results
+  finishQuiz() {
+    this.stopTimer();
+    document.getElementById("quiz-card-wrapper").style.display = "none";
+    document.getElementById("quiz-results-wrapper").style.display = "block";
+
+    let correctCount = 0;
+    const total = this.currentQuestions.length;
+
+    this.currentQuestions.forEach(q => {
+      const chosen = this.userAnswers.get(q.id);
+      if (chosen === q.correctAnswer) {
+        correctCount++;
+      } else {
+        // Track missed questions
+        if (!this.stats.missedQuestions.some(mq => mq.id === q.id)) {
+          this.stats.missedQuestions.push(q);
+        }
+      }
+    });
+
+    const percent = Math.round((correctCount / total) * 100);
+
+    // Update Stats
+    this.stats.totalSolved += total;
+    this.stats.totalCorrect += correctCount;
+    if (percent >= 80) {
+      this.stats.streak++;
+    } else {
+      this.stats.streak = 0;
+    }
+    this.saveStats();
+    this.renderAnalytics();
+
+    // Render Score UI
+    document.getElementById("result-score-num").textContent = `${percent}%`;
+    document.getElementById("result-correct-count").textContent = correctCount;
+    document.getElementById("result-total-count").textContent = total;
+
+    const headline = document.getElementById("result-headline");
+    if (percent >= 90) {
+      headline.textContent = "Master Level! Outstanding!";
+      if (typeof confetti === "function") confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    } else if (percent >= 70) {
+      headline.textContent = "Great Job! Solid SSAT Performance!";
+    } else {
+      headline.textContent = "Keep Practicing!";
+    }
+  }
+
+  // Custom Generator Handler
+  async handleCustomGeneration() {
+    const rawText = document.getElementById("custom-words-input").value;
+    const parsedWords = questionGenerator.parseInput(rawText);
+
+    if (parsedWords.length === 0) {
+      alert("Please enter or paste at least one vocabulary word.");
+      return;
+    }
+
+    const generateBtn = document.getElementById("generate-custom-btn");
+    const originalBtnHTML = generateBtn.innerHTML;
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating Questions...';
+
+    try {
+      const generatedSet = await questionGenerator.generateSet(parsedWords);
+      this.lastGeneratedCustomSet = generatedSet;
+      
+      // Display preview container
+      const outputContainer = document.getElementById("custom-questions-output");
+      outputContainer.style.display = "block";
+
+      document.getElementById("custom-q-count").textContent = generatedSet.length;
+
+      const listEl = document.getElementById("custom-questions-list");
+      listEl.innerHTML = "";
+
+      // Render interactive question cards (NO answer key spoiled upfront)
+      generatedSet.forEach((q, idx) => {
+        const card = document.createElement("div");
+        card.className = "quiz-container";
+        card.style.marginBottom = "1.5rem";
+        card.style.padding = "1.75rem";
+        
+        const choiceLetters = ["A", "B", "C", "D", "E"];
+        
+        let optionsHTML = "";
+        q.options.forEach((optText, i) => {
+          optionsHTML += `
+            <button class="option-btn custom-opt-btn" data-qidx="${idx}" data-oidx="${i}">
+              <div class="option-key">${choiceLetters[i]}</div>
+              <span>${optText}</span>
+            </button>
+          `;
+        });
+
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <span style="font-weight:700; color:var(--text-secondary);">Question ${idx + 1} of ${generatedSet.length}</span>
+            <span class="badge badge-${q.type}">${q.type.toUpperCase()}</span>
+          </div>
+          <div class="question-prompt-box" style="margin-bottom:1.25rem; padding:1rem;">
+            <div class="question-instruction" style="font-size:0.8rem;">
+              ${q.type === 'synonym' ? 'Choose the word closest in meaning to the word in capital letters.' : 'Choose the pair that best expresses a relationship similar to the original pair.'}
+            </div>
+            <div class="question-stem" style="font-size:1.6rem;">${q.targetWord || q.stem}</div>
+          </div>
+          <div class="options-grid" style="gap:0.75rem; margin-bottom:1rem;">
+            ${optionsHTML}
+          </div>
+          <div id="custom-exp-${idx}" class="explanation-box" style="display:none; margin-bottom:0;">
+            <div class="exp-title"><i class="fa-solid fa-circle-info"></i> Answer Explanation</div>
+            <div class="exp-text">${q.explanation}</div>
+          </div>
+        `;
+
+        // Attach choice click handlers
+        card.querySelectorAll(".custom-opt-btn").forEach(btn => {
+          btn.addEventListener("click", (e) => {
+            const optIdx = parseInt(btn.dataset.oidx, 10);
+            const allOptBtns = card.querySelectorAll(".custom-opt-btn");
+            
+            allOptBtns.forEach((b, i) => {
+              b.classList.add("disabled");
+              if (i === q.correctAnswer) {
+                b.classList.add("correct");
+              } else if (i === optIdx) {
+                b.classList.add("incorrect");
+              }
+            });
+
+            // Reveal explanation for this question
+            const expEl = card.querySelector(`#custom-exp-${idx}`);
+            if (expEl) expEl.style.display = "block";
+          });
+        });
+
+        listEl.appendChild(card);
+      });
+
+      // Attach PDF print export handler
+      const printPdfBtn = document.getElementById("print-custom-pdf-btn");
+      printPdfBtn.onclick = () => this.printCustomWorksheetPDF(generatedSet);
+    } catch (e) {
+      console.error("Error generating set:", e);
+      alert("An error occurred while generating questions. Please try again.");
+    } finally {
+      generateBtn.disabled = false;
+      generateBtn.innerHTML = originalBtnHTML;
+    }
+  }
+
+  // Generate Printable PDF Worksheet (Fits 20 questions + Answer Key on 1 single sheet of paper)
+  printCustomWorksheetPDF(questionSet) {
+    const printableContainer = document.getElementById("custom-printable-worksheet");
+    const choiceLetters = ["A", "B", "C", "D", "E"];
+    const targetSet = questionSet.slice(0, 20); // First 20 questions for 1-page worksheet
+
+    // Render 20 Questions
+    let questionsHTML = "";
+    targetSet.forEach((q, idx) => {
+      let optsHTML = q.options.map((optText, i) => 
+        `<span class="print-opt-item"><strong>(${choiceLetters[i]})</strong> ${optText}</span>`
+      ).join(" ");
+
+      const stemText = q.type === 'synonym' ? q.targetWord : q.stem;
+      const typeLabel = q.type === 'synonym' ? 'SYNONYM' : 'ANALOGY';
+
+      questionsHTML += `
+        <div class="print-q-item">
+          <div class="print-q-stem">
+            <strong>${idx + 1}. ${stemText}</strong>
+            <span class="print-q-type">[${typeLabel}]</span>
+          </div>
+          <div class="print-q-opts">
+            ${optsHTML}
+          </div>
+        </div>
+      `;
+    });
+
+    // Render Compact Answer Key at bottom
+    let answerKeyHTML = "";
+    targetSet.forEach((q, idx) => {
+      const correctLetter = choiceLetters[q.correctAnswer];
+      const correctText = q.options[q.correctAnswer];
+
+      answerKeyHTML += `
+        <div class="print-answer-item">
+          <strong>${idx + 1}. (${correctLetter})</strong> ${correctText}
+        </div>
+      `;
+    });
+
+    printableContainer.innerHTML = `
+      <div class="print-page">
+        <div class="print-header">
+          <div class="print-title">SSAT Upper Level Verbal Practice Worksheet</div>
+          <div class="print-subtitle">
+            Name: ___________________________ &nbsp;&nbsp;&nbsp;&nbsp; Date: ______________ &nbsp;&nbsp;&nbsp;&nbsp; Score: ______ / ${targetSet.length}
+          </div>
+        </div>
+
+        <div class="print-questions-grid">
+          ${questionsHTML}
+        </div>
+
+        <div class="print-answer-key-section">
+          <div class="print-key-title">Answer Key</div>
+          <div class="print-answer-key-list">
+            ${answerKeyHTML}
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Trigger browser print dialog (Save as PDF)
+    window.print();
+  }
+
+  // Render Vocabulary Cards
+  renderVocabCards(filterQuery = "") {
+    const grid = document.getElementById("vocab-cards-grid");
+    grid.innerHTML = "";
+
+    const query = filterQuery.toLowerCase().trim();
+    const list = SSAT_VOCABULARY.filter(v => 
+      v.word.toLowerCase().includes(query) ||
+      v.definition.toLowerCase().includes(query)
+    );
+
+    list.forEach(v => {
+      const card = document.createElement("div");
+      card.className = "flashcard";
+      
+      const synTags = v.synonyms.map(s => `<span class="syn-tag">${s}</span>`).join("");
+
+      card.innerHTML = `
+        <div class="card-word">
+          <span>${v.word}</span>
+          <button class="audio-btn" title="Listen Pronunciation"><i class="fa-solid fa-volume-high"></i></button>
+        </div>
+        <div class="card-pos">${v.pos} • ${v.phonetic}</div>
+        <div class="card-def">${v.definition}</div>
+        <div class="card-syns">${synTags}</div>
+      `;
+
+      card.querySelector(".audio-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.speakWord(v.word);
+      });
+
+      grid.appendChild(card);
+    });
+  }
+
+  // Render Analogy Guide
+  renderAnalogyGuide() {
+    const grid = document.getElementById("analogy-types-grid");
+    grid.innerHTML = "";
+
+    SSAT_ANALOGY_TYPES.forEach(t => {
+      const card = document.createElement("div");
+      card.className = "strategy-card";
+      card.innerHTML = `
+        <div class="strat-name">${t.name}</div>
+        <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:0.75rem;">${t.description}</p>
+        <div style="background:var(--bg-secondary); padding:0.6rem 0.8rem; border-radius:var(--radius-sm); font-family:monospace; font-size:0.85rem; color:#818cf8; margin-bottom:0.75rem;">
+          ${t.example}
+        </div>
+        <div style="font-size:0.85rem; color:var(--warning);">
+          <strong>Solving Strategy:</strong> ${t.strategy}
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // Render Analytics & Missed Queue
+  renderAnalytics() {
+    document.getElementById("stat-total-solved").textContent = this.stats.totalSolved;
+    
+    const accuracy = this.stats.totalSolved > 0 
+      ? Math.round((this.stats.totalCorrect / this.stats.totalSolved) * 100) 
+      : 0;
+    document.getElementById("stat-accuracy").textContent = `${accuracy}%`;
+    document.getElementById("stat-streak").textContent = this.stats.streak;
+
+    // Render Missed Queue
+    const container = document.getElementById("missed-queue-container");
+    if (this.stats.missedQuestions.length === 0) {
+      container.innerHTML = `<p style="color: var(--text-secondary);">No missed questions yet! Great job practicing.</p>`;
+    } else {
+      container.innerHTML = "";
+      this.stats.missedQuestions.forEach((q, idx) => {
+        const div = document.createElement("div");
+        div.className = "strategy-card";
+        div.style.marginBottom = "1rem";
+        div.innerHTML = `
+          <strong style="color:var(--danger);">Q${idx + 1}. ${q.targetWord || q.stem}</strong>
+          <p style="font-size:0.9rem; margin-top:0.4rem;">${q.explanation}</p>
+        `;
+        container.appendChild(div);
+      });
+
+      const retryMissedBtn = document.createElement("button");
+      retryMissedBtn.className = "btn-primary";
+      retryMissedBtn.style.marginTop = "1rem";
+      retryMissedBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Practice Missed Questions Now';
+      retryMissedBtn.addEventListener("click", () => {
+        document.querySelector('[data-target="pane-quiz"]').click();
+        this.startQuiz(this.stats.missedQuestions);
+      });
+      container.appendChild(retryMissedBtn);
+    }
+  }
+
+  shuffleArray(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+}
+
+// Initialize Application on DOM Ready
+document.addEventListener("DOMContentLoaded", () => {
+  window.app = new SSATApp();
+});
