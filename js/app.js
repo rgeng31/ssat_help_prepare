@@ -57,6 +57,10 @@ class SSATApp {
     this.lastGeneratedCustomSet = [];
     this.fileHandle = null;
 
+    // Daily Vocab Deck Single-Card Navigation State
+    this.dailyDeck = [];
+    this.dailyIndex = 0;
+
     this.init();
   }
 
@@ -284,6 +288,20 @@ class SSATApp {
     if (shuffleDailyBtn) {
       shuffleDailyBtn.addEventListener("click", () => {
         this.renderDailyVocabCards();
+      });
+    }
+
+    const prevDailyBtn = document.getElementById("prev-daily-card-btn");
+    if (prevDailyBtn) {
+      prevDailyBtn.addEventListener("click", () => {
+        this.prevDailyCard();
+      });
+    }
+
+    const nextDailyBtn = document.getElementById("next-daily-card-btn");
+    if (nextDailyBtn) {
+      nextDailyBtn.addEventListener("click", () => {
+        this.nextDailyCard();
       });
     }
 
@@ -985,42 +1003,64 @@ class SSATApp {
     this.renderDailyVocabCards();
   }
 
-  // Render Daily Vocab Words (Top 100 randomly generated cards)
+  // Render Daily Vocab Words (Single-card stage navigation up to 100 cards)
   renderDailyVocabCards() {
-    const grid = document.getElementById("daily-vocab-grid");
-    const countEl = document.getElementById("daily-card-count");
-    if (!grid) return;
-
-    grid.innerHTML = "";
+    const container = document.getElementById("daily-single-card-container");
+    const progressText = document.getElementById("daily-card-progress-text");
+    const progressFill = document.getElementById("daily-card-progress-fill");
+    if (!container) return;
 
     const sourcePool = [...this.customVocabCards];
 
     if (sourcePool.length === 0) {
-      grid.innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1.5rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+      container.innerHTML = `
+        <div style="text-align: center; padding: 3rem 1.5rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
           <i class="fa-solid fa-cards-blank" style="font-size: 2.2rem; color: var(--text-secondary); margin-bottom: 0.75rem; display: block;"></i>
           <h3 style="margin-bottom: 0.4rem; color: var(--text-primary);">No vocabulary cards in your bank yet</h3>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0;">Add vocabulary in the <strong>Vocabulary Cards</strong> tab to generate your daily 100 cards!</p>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0;">Add vocabulary in the <strong>Vocabulary Cards</strong> tab to generate your daily deck!</p>
         </div>
       `;
-      if (countEl) countEl.textContent = "0";
+      if (progressText) progressText.textContent = "Card 0 of 0";
+      if (progressFill) progressFill.style.width = "0%";
+      const prevBtn = document.getElementById("prev-daily-card-btn");
+      const nextBtn = document.getElementById("next-daily-card-btn");
+      if (prevBtn) prevBtn.disabled = true;
+      if (nextBtn) nextBtn.disabled = true;
       return;
     }
 
     const shuffled = this.shuffleArray(sourcePool);
-    const dailyCards = shuffled.slice(0, 100);
+    this.dailyDeck = shuffled.slice(0, 100);
+    this.dailyIndex = 0;
 
-    if (countEl) countEl.textContent = dailyCards.length;
+    this.displayCurrentDailyCard();
+  }
 
-    dailyCards.forEach(v => {
-      const card = document.createElement("div");
-      card.className = "flip-card";
-      
-      const synTags = (v.synonyms || []).map(s => `<span class="syn-tag">${s}</span>`).join("");
-      const phoneticText = v.phonetic ? `<div class="card-phonetic" style="margin-bottom:0;">${v.phonetic}</div>` : "";
-      const dateText = v.dateAdded || new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  displayCurrentDailyCard() {
+    const container = document.getElementById("daily-single-card-container");
+    const progressText = document.getElementById("daily-card-progress-text");
+    const progressFill = document.getElementById("daily-card-progress-fill");
+    const prevBtn = document.getElementById("prev-daily-card-btn");
+    const nextBtn = document.getElementById("next-daily-card-btn");
 
-      card.innerHTML = `
+    if (!container || this.dailyDeck.length === 0) return;
+
+    const total = this.dailyDeck.length;
+    const current = this.dailyIndex + 1;
+    const v = this.dailyDeck[this.dailyIndex];
+
+    if (progressText) progressText.textContent = `Card ${current} of ${total}`;
+    if (progressFill) progressFill.style.width = `${(current / total) * 100}%`;
+
+    if (prevBtn) prevBtn.disabled = (this.dailyIndex === 0);
+    if (nextBtn) nextBtn.disabled = (this.dailyIndex === total - 1);
+
+    const synTags = (v.synonyms || []).map(s => `<span class="syn-tag">${s}</span>`).join("");
+    const phoneticText = v.phonetic ? `<div class="card-phonetic" style="margin-bottom:0;">${v.phonetic}</div>` : "";
+    const dateText = v.dateAdded || new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+    container.innerHTML = `
+      <div class="flip-card" style="height: 250px;">
         <div class="flip-card-inner">
           <!-- FRONT SIDE (Word only + Audio + Flip Hint) -->
           <div class="flip-card-front">
@@ -1030,15 +1070,15 @@ class SSATApp {
             </div>
             
             <div style="margin: 1.5rem 0; text-align: center;">
-              <div class="card-word" style="justify-content: center; gap: 0.6rem; font-size: 1.8rem;">
+              <div class="card-word" style="justify-content: center; gap: 0.6rem; font-size: 2rem;">
                 <span>${v.word}</span>
                 <button class="audio-btn" title="Listen Pronunciation"><i class="fa-solid fa-volume-high"></i></button>
               </div>
               ${phoneticText}
             </div>
 
-            <div style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.8;">
-              <i class="fa-solid fa-hand-pointer"></i> Click card to reveal definition
+            <div style="font-size: 0.8rem; color: var(--text-secondary); opacity: 0.85;">
+              <i class="fa-solid fa-hand-pointer"></i> Tap card to reveal definition
             </div>
           </div>
 
@@ -1046,10 +1086,10 @@ class SSATApp {
           <div class="flip-card-back">
             <div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
-                <strong style="font-size: 1.1rem; color: var(--text-primary);">${v.word}</strong>
+                <strong style="font-size: 1.2rem; color: var(--text-primary);">${v.word}</strong>
                 <span class="card-pos" style="margin-bottom: 0;">${v.pos || 'Word'}</span>
               </div>
-              <div class="card-def" style="margin-bottom: 0.75rem; line-height: 1.4;">${v.definition}</div>
+              <div class="card-def" style="margin-bottom: 0.75rem; line-height: 1.45; font-size: 1rem;">${v.definition}</div>
               ${synTags ? `<div class="card-syns">${synTags}</div>` : ''}
             </div>
 
@@ -1059,23 +1099,36 @@ class SSATApp {
             </div>
           </div>
         </div>
-      `;
+      </div>
+    `;
 
-      // Flip card action on click
+    const card = container.querySelector(".flip-card");
+    if (card) {
       card.addEventListener("click", () => {
         card.classList.toggle("flipped");
       });
 
-      // Stop flip when audio speaker button is clicked
       card.querySelectorAll(".audio-btn").forEach(btn => {
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
           this.speakWord(v.word);
         });
       });
+    }
+  }
 
-      grid.appendChild(card);
-    });
+  prevDailyCard() {
+    if (this.dailyIndex > 0) {
+      this.dailyIndex--;
+      this.displayCurrentDailyCard();
+    }
+  }
+
+  nextDailyCard() {
+    if (this.dailyIndex < this.dailyDeck.length - 1) {
+      this.dailyIndex++;
+      this.displayCurrentDailyCard();
+    }
   }
 
   // Render Analogy Guide

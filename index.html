@@ -65,7 +65,7 @@
     <!-- 1. DAILY VOCAB WORDS TAB -->
     <section id="pane-quiz" class="tab-pane">
 
-      <!-- Top Section: Daily 100 Vocab Flashcards -->
+      <!-- Top Section: Daily Vocab Words Single Flashcard Deck -->
       <div class="setup-card no-print" style="margin-bottom: 2rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
           <div>
@@ -73,16 +73,41 @@
               <i class="fa-solid fa-calendar-day" style="color: var(--accent-primary);"></i> Daily Vocab Words
             </h2>
             <p class="section-subtitle" style="margin-bottom: 0;">
-              Randomly generated 100 flashcards from your vocabulary bank (<span id="daily-card-count">0</span> cards).
+              Interactive flashcards provided one-by-one. Tap the card to reveal definition!
             </p>
           </div>
-          <button id="shuffle-daily-btn" class="btn-secondary">
-            <i class="fa-solid fa-shuffle"></i> Shuffle Daily 100
+          
+          <button id="shuffle-daily-btn" class="btn-secondary" title="Shuffle Deck">
+            <i class="fa-solid fa-shuffle"></i> Shuffle Deck
           </button>
         </div>
 
-        <div id="daily-vocab-grid" class="daily-flashcards-grid" style="max-height: 560px; overflow-y: auto; padding-right: 0.5rem;">
-          <!-- 100 randomly sampled interactive flip cards rendered here -->
+        <!-- Progress Header & Bar -->
+        <div style="margin-bottom: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);">
+            <span id="daily-card-progress-text">Card 1 of 100</span>
+            <span style="font-size: 0.8rem; color: var(--accent-primary);"><i class="fa-solid fa-hand-pointer"></i> Tap card to flip</span>
+          </div>
+          <div class="progress-bar-container">
+            <div id="daily-card-progress-fill" class="progress-bar-fill" style="width: 1%;"></div>
+          </div>
+        </div>
+
+        <!-- Single Card Stage -->
+        <div style="display: flex; justify-content: center; margin: 1.5rem 0;">
+          <div id="daily-single-card-container" style="width: 100%; max-width: 520px;">
+            <!-- Active 3D flip card inserted here -->
+          </div>
+        </div>
+
+        <!-- Single Card Navigation Controls -->
+        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 520px; margin: 0 auto; gap: 1rem;">
+          <button id="prev-daily-card-btn" class="btn-secondary" style="flex: 1;" disabled>
+            <i class="fa-solid fa-arrow-left"></i> Previous
+          </button>
+          <button id="next-daily-card-btn" class="btn-primary" style="flex: 1;">
+            Next <i class="fa-solid fa-arrow-right"></i>
+          </button>
         </div>
       </div>
 
