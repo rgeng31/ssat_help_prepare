@@ -1014,30 +1014,64 @@ class SSATApp {
 
     dailyCards.forEach(v => {
       const card = document.createElement("div");
-      card.className = "flashcard";
+      card.className = "flip-card";
       
       const synTags = (v.synonyms || []).map(s => `<span class="syn-tag">${s}</span>`).join("");
-      const phoneticText = v.phonetic ? `<div class="card-phonetic">${v.phonetic}</div>` : "";
+      const phoneticText = v.phonetic ? `<div class="card-phonetic" style="margin-bottom:0;">${v.phonetic}</div>` : "";
       const dateText = v.dateAdded || new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
       card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-          <span class="card-pos" style="margin-bottom: 0;">${v.pos || 'Word'}</span>
-          <span style="font-size:0.75rem; color:var(--text-secondary); opacity:0.8;"><i class="fa-solid fa-calendar-check"></i> Daily</span>
+        <div class="flip-card-inner">
+          <!-- FRONT SIDE (Word only + Audio + Flip Hint) -->
+          <div class="flip-card-front">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+              <span class="card-pos" style="margin-bottom: 0;">${v.pos || 'Word'}</span>
+              <span class="flip-hint"><i class="fa-solid fa-rotate"></i> Tap to flip</span>
+            </div>
+            
+            <div style="margin: 1.5rem 0; text-align: center;">
+              <div class="card-word" style="justify-content: center; gap: 0.6rem; font-size: 1.8rem;">
+                <span>${v.word}</span>
+                <button class="audio-btn" title="Listen Pronunciation"><i class="fa-solid fa-volume-high"></i></button>
+              </div>
+              ${phoneticText}
+            </div>
+
+            <div style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.8;">
+              <i class="fa-solid fa-hand-pointer"></i> Click card to reveal definition
+            </div>
+          </div>
+
+          <!-- BACK SIDE (Definition + Synonyms + Metadata) -->
+          <div class="flip-card-back">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                <strong style="font-size: 1.1rem; color: var(--text-primary);">${v.word}</strong>
+                <span class="card-pos" style="margin-bottom: 0;">${v.pos || 'Word'}</span>
+              </div>
+              <div class="card-def" style="margin-bottom: 0.75rem; line-height: 1.4;">${v.definition}</div>
+              ${synTags ? `<div class="card-syns">${synTags}</div>` : ''}
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 0.5rem; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-secondary);">
+              <span><i class="fa-regular fa-calendar-days"></i> Added: ${dateText}</span>
+              <span class="flip-hint"><i class="fa-solid fa-rotate"></i> Flip back</span>
+            </div>
+          </div>
         </div>
-        <div class="card-word">
-          <span>${v.word}</span>
-          <button class="audio-btn" title="Listen Pronunciation"><i class="fa-solid fa-volume-high"></i></button>
-        </div>
-        ${phoneticText}
-        <div class="card-def">${v.definition}</div>
-        ${synTags ? `<div class="card-syns">${synTags}</div>` : ''}
-        <div class="card-footer-date"><i class="fa-regular fa-calendar-days"></i> Added: ${dateText}</div>
       `;
 
-      card.querySelector(".audio-btn").addEventListener("click", (e) => {
-        e.stopPropagation();
-        this.speakWord(v.word);
+      // Flip card action on click
+      card.addEventListener("click", () => {
+        card.classList.toggle("flipped");
+      });
+
+      // Stop flip when audio speaker button is clicked
+      card.querySelectorAll(".audio-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          this.speakWord(v.word);
+        });
       });
 
       grid.appendChild(card);
