@@ -1,4 +1,45 @@
-// Main Application Controller for SSAT Verbal Prep Studio
+// IndexedDB persistence helpers for local FileSystemFileHandle
+const IDB_NAME = 'ssat_vocab_db';
+const IDB_STORE = 'handles';
+
+function getStoredFileHandle() {
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+      req.onsuccess = () => {
+        const db = req.result;
+        const tx = db.transaction(IDB_STORE, 'readonly');
+        const store = tx.objectStore(IDB_STORE);
+        const getReq = store.get('csv_handle');
+        getReq.onsuccess = () => resolve(getReq.result || null);
+        getReq.onerror = () => resolve(null);
+      };
+      req.onerror = () => resolve(null);
+    } catch (e) {
+      resolve(null);
+    }
+  });
+}
+
+function storeFileHandle(handle) {
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+      req.onsuccess = () => {
+        const db = req.result;
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        const store = tx.objectStore(IDB_STORE);
+        store.put(handle, 'csv_handle');
+        tx.oncomplete = () => resolve(true);
+      };
+      req.onerror = () => resolve(false);
+    } catch (e) {
+      resolve(false);
+    }
+  });
+}
 
 class SSATApp {
   constructor() {
@@ -19,11 +60,23 @@ class SSATApp {
     this.init();
   }
 
-  init() {
+  async init() {
     this.bindEvents();
     this.renderVocabCards();
     this.renderAnalogyGuide();
     this.renderAnalytics();
+
+    // Restore saved CSV file handle from IndexedDB if available
+    try {
+      const savedHandle = await getStoredFileHandle();
+      if (savedHandle) {
+        const state = await savedHandle.queryPermission({ mode: 'readwrite' });
+        if (state === 'granted' || (await savedHandle.requestPermission({ mode: 'readwrite' })) === 'granted') {
+          this.fileHandle = savedHandle;
+        }
+      }
+    } catch (e) {}
+
     this.loadCSVOnStart();
   }
 
@@ -649,17 +702,15 @@ class SSATApp {
     return [headers.map(h => `"${h}"`).join(","), ...rows.map(r => r.join(","))].join("\n");
   }
 
-  async syncCSVFile() {
-    if (this.customVocabCards.length === 0) {
-      alert("Your Vocabulary Bank is empty! Add some vocabulary cards first before saving to CSV.");
-      return;
-    }
+  async syncCSVFile(promptIfUnlinked = true) {
+    if (this.customVocabCards.length === 0) return;
 
     const csvContent = this.generateCSVContent();
 
     if ('showSaveFilePicker' in window) {
       try {
         if (!this.fileHandle) {
+          if (!promptIfUnlinked) return;
           this.fileHandle = await window.showSaveFilePicker({
             suggestedName: 'vocabulary_bank.csv',
             types: [{
@@ -667,11 +718,13 @@ class SSATApp {
               accept: { 'text/csv': ['.csv'] }
             }]
           });
+          if (this.fileHandle) {
+            await storeFileHandle(this.fileHandle);
+          }
         }
         const writable = await this.fileHandle.createWritable();
         await writable.write(csvContent);
         await writable.close();
-        alert("Saved directly to vocabulary_bank.csv! Future card additions will automatically sync directly to this file.");
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.error("Direct file save error:", err);
@@ -738,6 +791,10 @@ class SSATApp {
       }
       this.saveCustomVocabCards();
       this.renderVocabCards();
+
+      if (!this.fileHandle && 'showSaveFilePicker' in window && addedCount > 0) {
+        await this.syncCSVFile(true);
+      }
       
       document.getElementById("vocab-words-input").value = "";
       document.getElementById("add-vocab-panel").style.display = "none";
