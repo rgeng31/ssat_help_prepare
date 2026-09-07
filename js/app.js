@@ -109,20 +109,26 @@ class SSATApp {
   }
 
   async loadCSVOnStart() {
-    if (this.customVocabCards.length === 0) {
-      try {
-        const resp = await fetch('./vocabulary_bank.csv');
-        if (resp.ok) {
-          const text = await resp.text();
-          const parsed = this.parseCSVText(text);
-          if (parsed.length > 0) {
+    try {
+      const resp = await fetch('./vocabulary_bank.csv');
+      if (resp.ok) {
+        const text = await resp.text();
+        const parsed = this.parseCSVText(text);
+        if (parsed.length > 0) {
+          if (this.customVocabCards.length === 0) {
             this.customVocabCards = parsed;
-            localStorage.setItem("ssat_custom_vocab_cards", JSON.stringify(this.customVocabCards));
-            this.renderVocabCards();
+          } else {
+            parsed.forEach(c => {
+              if (!this.customVocabCards.some(v => v.word.toUpperCase() === c.word.toUpperCase())) {
+                this.customVocabCards.push(c);
+              }
+            });
           }
+          localStorage.setItem("ssat_custom_vocab_cards", JSON.stringify(this.customVocabCards));
+          this.renderVocabCards();
         }
-      } catch (e) {}
-    }
+      }
+    } catch (e) {}
   }
 
   parseCSVText(csvText) {
