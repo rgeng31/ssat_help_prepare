@@ -317,8 +317,13 @@
             </button>
             <button id="clear-vocab-bank-btn" class="btn-secondary" title="Clear all saved cards">
               <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </div>
+        <!-- Mastery Status Filter Chips -->
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.25rem; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 1rem;">
+          <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-right: 0.25rem;">Filter Mastery:</span>
+          <button class="filter-chip active" data-status-filter="all">All Words (<span id="count-filter-all">0</span>)</button>
+          <button class="filter-chip" data-status-filter="learning" style="color: #ef4444;"><i class="fa-solid fa-circle-xmark"></i> Don't Know (<span id="count-filter-learning">0</span>)</button>
+          <button class="filter-chip" data-status-filter="uncategorized" style="color: var(--text-secondary);"><i class="fa-solid fa-circle-question"></i> Uncategorized (<span id="count-filter-uncategorized">0</span>)</button>
+          <button class="filter-chip" data-status-filter="mastered" style="color: #22c55e;"><i class="fa-solid fa-circle-check"></i> Know (<span id="count-filter-mastered">0</span>)</button>
         </div>
 
         <!-- Add Vocabulary Input Panel (Collapsible Drawer) -->

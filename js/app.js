@@ -57,9 +57,10 @@ class SSATApp {
     this.lastGeneratedCustomSet = [];
     this.fileHandle = null;
 
-    // Daily Vocab Deck Single-Card Navigation State
+    // Daily Vocab Deck Single-Card Navigation & Filter State
     this.dailyDeck = [];
     this.dailyIndex = 0;
+    this.activeStatusFilter = "all";
 
     this.init();
   }
@@ -154,7 +155,8 @@ class SSATApp {
             phonetic: cleanCols[2] ? cleanCols[2].trim() : '',
             definition: cleanCols[3] ? cleanCols[3].trim() : '',
             synonyms: cleanCols[4] ? cleanCols[4].split(';').map(s => s.trim()).filter(Boolean) : [],
-            dateAdded: cleanCols[5] ? cleanCols[5].trim() : new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+            dateAdded: cleanCols[5] ? cleanCols[5].trim() : new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+            status: cleanCols[6] ? cleanCols[6].trim().toLowerCase() : 'uncategorized'
           });
         }
       }
@@ -284,12 +286,14 @@ class SSATApp {
       });
     }
 
-    const prevDailyBtn = document.getElementById("prev-daily-card-btn");
-    if (prevDailyBtn) {
-      prevDailyBtn.addEventListener("click", () => {
-        this.prevDailyCard();
+    document.querySelectorAll(".filter-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        this.activeStatusFilter = chip.dataset.statusFilter;
+        this.renderVocabCards(document.getElementById("vocab-search-input") ? document.getElementById("vocab-search-input").value : "");
       });
-    }
+    });
 
     const nextDailyBtn = document.getElementById("next-daily-card-btn");
     if (nextDailyBtn) {
@@ -706,8 +710,22 @@ class SSATApp {
     this.renderVocabCards();
   }
 
+  setCardStatus(word, status) {
+    const card = this.customVocabCards.find(v => v.word.toUpperCase() === word.toUpperCase());
+    if (card) {
+      card.status = status;
+      this.saveCustomVocabCards();
+      
+      const inDaily = this.dailyDeck.find(v => v.word.toUpperCase() === word.toUpperCase());
+      if (inDaily) inDaily.status = status;
+      
+      this.renderVocabCards(document.getElementById("vocab-search-input") ? document.getElementById("vocab-search-input").value : "");
+      this.displayCurrentDailyCard();
+    }
+  }
+
   generateCSVContent() {
-    const headers = ["Word", "Part of Speech", "Pronunciation", "Definition", "Synonyms", "Date Added"];
+    const headers = ["Word", "Part of Speech", "Pronunciation", "Definition", "Synonyms", "Date Added", "Mastery Status"];
     
     const escapeCSV = (field) => {
       if (field === null || field === undefined) return '""';
@@ -721,7 +739,8 @@ class SSATApp {
       escapeCSV(v.phonetic || ''),
       escapeCSV(v.definition || ''),
       escapeCSV((v.synonyms || []).join("; ")),
-      escapeCSV(v.dateAdded || '')
+      escapeCSV(v.dateAdded || ''),
+      escapeCSV(v.status || 'uncategorized')
     ]);
 
     return [headers.map(h => `"${h}"`).join(","), ...rows.map(r => r.join(","))].join("\n");
@@ -937,20 +956,42 @@ class SSATApp {
   // Render Vocabulary Cards
   renderVocabCards(filterQuery = "") {
     const grid = document.getElementById("vocab-cards-grid");
+    if (!grid) return;
     grid.innerHTML = "";
 
+    // Update filter counts
+    const countAllEl = document.getElementById("count-filter-all");
+    const countLearningEl = document.getElementById("count-filter-learning");
+    const countUncatEl = document.getElementById("count-filter-uncategorized");
+    const countMasteredEl = document.getElementById("count-filter-mastered");
+
+    const totalAll = this.customVocabCards.length;
+    const totalLearning = this.customVocabCards.filter(v => v.status === 'learning').length;
+    const totalUncat = this.customVocabCards.filter(v => !v.status || v.status === 'uncategorized').length;
+    const totalMastered = this.customVocabCards.filter(v => v.status === 'mastered').length;
+
+    if (countAllEl) countAllEl.textContent = totalAll;
+    if (countLearningEl) countLearningEl.textContent = totalLearning;
+    if (countUncatEl) countUncat.textContent = totalUncat;
+    if (countMasteredEl) countMasteredEl.textContent = totalMastered;
+
     const query = filterQuery.toLowerCase().trim();
-    const list = this.customVocabCards.filter(v => 
-      v.word.toLowerCase().includes(query) ||
-      (v.definition && v.definition.toLowerCase().includes(query))
-    );
+    const list = this.customVocabCards.filter(v => {
+      const matchesQuery = v.word.toLowerCase().includes(query) || (v.definition && v.definition.toLowerCase().includes(query));
+      if (!matchesQuery) return false;
+
+      if (this.activeStatusFilter === "learning") return v.status === "learning";
+      if (this.activeStatusFilter === "mastered") return v.status === "mastered";
+      if (this.activeStatusFilter === "uncategorized") return !v.status || v.status === "uncategorized";
+      return true;
+    });
 
     if (list.length === 0) {
       grid.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1.5rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
           <i class="fa-solid fa-cards-blank" style="font-size: 2.5rem; color: var(--text-secondary); margin-bottom: 1rem; display: block;"></i>
-          <h3 style="margin-bottom: 0.5rem; color: var(--text-primary);">Your vocab bank is empty</h3>
-          <p style="color: var(--text-secondary); font-size: 0.95rem;">Add vocabulary using the button above</p>
+          <h3 style="margin-bottom: 0.5rem; color: var(--text-primary);">No vocabulary cards match this filter</h3>
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">Try selecting a different filter or adding new vocabulary.</p>
         </div>
       `;
       return;
@@ -962,12 +1003,23 @@ class SSATApp {
       
       const synTags = (v.synonyms || []).map(s => `<span class="syn-tag">${s}</span>`).join("");
       const phoneticText = v.phonetic ? `<div class="card-phonetic">${v.phonetic}</div>` : "";
-
       const dateText = v.dateAdded || new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+      let statusBadgeHTML = '';
+      if (v.status === 'mastered') {
+        statusBadgeHTML = `<span class="status-badge badge-mastered"><i class="fa-solid fa-check"></i> Know</span>`;
+      } else if (v.status === 'learning') {
+        statusBadgeHTML = `<span class="status-badge badge-learning"><i class="fa-solid fa-xmark"></i> Don't Know</span>`;
+      } else {
+        statusBadgeHTML = `<span class="status-badge badge-uncategorized"><i class="fa-solid fa-question"></i> Uncategorized</span>`;
+      }
 
       card.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-          <span class="card-pos" style="margin-bottom: 0;">${v.pos || 'Word'}</span>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <span class="card-pos" style="margin-bottom: 0;">${v.pos || 'Word'}</span>
+            ${statusBadgeHTML}
+          </div>
           <button class="delete-card-btn" title="Delete Card"><i class="fa-solid fa-trash-can"></i></button>
         </div>
         <div class="card-word">
@@ -977,6 +1029,16 @@ class SSATApp {
         ${phoneticText}
         <div class="card-def">${v.definition}</div>
         ${synTags ? `<div class="card-syns">${synTags}</div>` : ''}
+
+        <div class="card-status-actions" style="margin-top:0.75rem; border-top:1px dashed var(--border-color); padding-top:0.6rem;">
+          <button class="status-btn btn-dont-know ${v.status === 'learning' ? 'active' : ''}" data-word="${v.word}" data-status="learning">
+            <i class="fa-solid fa-circle-xmark"></i> Don't Know
+          </button>
+          <button class="status-btn btn-know ${v.status === 'mastered' ? 'active' : ''}" data-word="${v.word}" data-status="mastered">
+            <i class="fa-solid fa-circle-check"></i> Know
+          </button>
+        </div>
+
         <div class="card-footer-date"><i class="fa-regular fa-calendar-days"></i> Added: ${dateText}</div>
       `;
 
@@ -990,10 +1052,16 @@ class SSATApp {
         this.deleteSingleVocabCard(v.word);
       });
 
+      card.querySelectorAll(".status-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const targetStatus = btn.dataset.status;
+          this.setCardStatus(v.word, targetStatus);
+        });
+      });
+
       grid.appendChild(card);
     });
-
-    this.renderDailyVocabCards();
   }
 
   getTodayDateString() {
@@ -1080,8 +1148,17 @@ class SSATApp {
       this.dailyDeck = savedState.cards;
       this.dailyIndex = Math.min(savedState.currentIndex || 0, this.dailyDeck.length - 1);
     } else {
-      const shuffled = this.seededShuffle(sourcePool, todayStr);
-      this.dailyDeck = shuffled.slice(0, 100);
+      // Prioritize Don't Know (learning) -> Uncategorized -> Know (mastered)
+      const dontKnowPool = sourcePool.filter(v => v.status === 'learning');
+      const uncategorizedPool = sourcePool.filter(v => !v.status || v.status === 'uncategorized');
+      const knowPool = sourcePool.filter(v => v.status === 'mastered');
+
+      const shuffledDontKnow = this.seededShuffle(dontKnowPool, todayStr + "-learning");
+      const shuffledUncategorized = this.seededShuffle(uncategorizedPool, todayStr + "-uncat");
+      const shuffledKnow = this.seededShuffle(knowPool, todayStr + "-mastered");
+
+      const prioritizedPool = [...shuffledDontKnow, ...shuffledUncategorized, ...shuffledKnow];
+      this.dailyDeck = prioritizedPool.slice(0, 100);
       this.dailyIndex = 0;
       this.saveDailyState();
     }
@@ -1113,7 +1190,7 @@ class SSATApp {
     const dateText = v.dateAdded || new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
     container.innerHTML = `
-      <div class="flip-card" style="height: 250px;">
+      <div class="flip-card" style="height: 270px;">
         <div class="flip-card-inner">
           <!-- FRONT SIDE (Word only + Audio + Flip Hint) -->
           <div class="flip-card-front">
@@ -1135,20 +1212,31 @@ class SSATApp {
             </div>
           </div>
 
-          <!-- BACK SIDE (Definition + Synonyms + Metadata) -->
+          <!-- BACK SIDE (Definition + Synonyms + Mastery Actions) -->
           <div class="flip-card-back">
             <div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
                 <strong style="font-size: 1.2rem; color: var(--text-primary);">${v.word}</strong>
                 <span class="card-pos" style="margin-bottom: 0;">${v.pos || 'Word'}</span>
               </div>
-              <div class="card-def" style="margin-bottom: 0.75rem; line-height: 1.45; font-size: 1rem;">${v.definition}</div>
-              ${synTags ? `<div class="card-syns">${synTags}</div>` : ''}
+              <div class="card-def" style="margin-bottom: 0.6rem; line-height: 1.4; font-size: 0.95rem;">${v.definition}</div>
+              ${synTags ? `<div class="card-syns" style="margin-bottom:0.5rem;">${synTags}</div>` : ''}
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 0.5rem; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-secondary);">
-              <span><i class="fa-regular fa-calendar-days"></i> Added: ${dateText}</span>
-              <span class="flip-hint"><i class="fa-solid fa-rotate"></i> Flip back</span>
+            <div>
+              <div class="card-status-actions">
+                <button class="status-btn btn-dont-know ${v.status === 'learning' ? 'active' : ''}" data-word="${v.word}" data-status="learning">
+                  <i class="fa-solid fa-circle-xmark"></i> Don't Know
+                </button>
+                <button class="status-btn btn-know ${v.status === 'mastered' ? 'active' : ''}" data-word="${v.word}" data-status="mastered">
+                  <i class="fa-solid fa-circle-check"></i> Know
+                </button>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 0.4rem; margin-top: 0.4rem; font-size: 0.75rem; color: var(--text-secondary);">
+                <span><i class="fa-regular fa-calendar-days"></i> Added: ${dateText}</span>
+                <span class="flip-hint"><i class="fa-solid fa-rotate"></i> Flip back</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1165,6 +1253,14 @@ class SSATApp {
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
           this.speakWord(v.word);
+        });
+      });
+
+      card.querySelectorAll(".status-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const targetStatus = btn.dataset.status;
+          this.setCardStatus(v.word, targetStatus);
         });
       });
     }
