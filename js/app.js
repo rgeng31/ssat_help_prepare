@@ -713,8 +713,8 @@ class SSATApp {
       grid.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1.5rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
           <i class="fa-solid fa-cards-blank" style="font-size: 2.5rem; color: var(--text-secondary); margin-bottom: 1rem; display: block;"></i>
-          <h3 style="margin-bottom: 0.5rem; color: var(--text-primary);">Your Vocab Bank is Empty</h3>
-          <p style="color: var(--text-secondary); font-size: 0.95rem;">Generate practice sets in the <strong>Custom Generator</strong> tab to populate your custom vocabulary flashcards here!</p>
+          <h3 style="margin-bottom: 0.5rem; color: var(--text-primary);">Your vocab bank is empty</h3>
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">Add vocabulary using the button above</p>
         </div>
       `;
       return;
