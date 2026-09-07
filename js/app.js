@@ -284,13 +284,6 @@ class SSATApp {
       });
     }
 
-    const shuffleDailyBtn = document.getElementById("shuffle-daily-btn");
-    if (shuffleDailyBtn) {
-      shuffleDailyBtn.addEventListener("click", () => {
-        this.renderDailyVocabCards(true);
-      });
-    }
-
     const prevDailyBtn = document.getElementById("prev-daily-card-btn");
     if (prevDailyBtn) {
       prevDailyBtn.addEventListener("click", () => {
@@ -1055,7 +1048,7 @@ class SSATApp {
   }
 
   // Render Daily Vocab Words (Date-seeded persistence up to 100 cards)
-  renderDailyVocabCards(forceReshuffle = false) {
+  renderDailyVocabCards() {
     const container = document.getElementById("daily-single-card-container");
     const progressText = document.getElementById("daily-card-progress-text");
     const progressFill = document.getElementById("daily-card-progress-fill");
@@ -1081,14 +1074,13 @@ class SSATApp {
     }
 
     const todayStr = this.getTodayDateString();
-    const savedState = !forceReshuffle ? this.loadDailyState() : null;
+    const savedState = this.loadDailyState();
 
     if (savedState) {
       this.dailyDeck = savedState.cards;
       this.dailyIndex = Math.min(savedState.currentIndex || 0, this.dailyDeck.length - 1);
     } else {
-      const seedKey = forceReshuffle ? `${todayStr}-${Date.now()}` : todayStr;
-      const shuffled = this.seededShuffle(sourcePool, seedKey);
+      const shuffled = this.seededShuffle(sourcePool, todayStr);
       this.dailyDeck = shuffled.slice(0, 100);
       this.dailyIndex = 0;
       this.saveDailyState();
