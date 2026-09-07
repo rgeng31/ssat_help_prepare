@@ -6,12 +6,6 @@ class QuestionGenerator {
     const env = (typeof window !== 'undefined' && window.ENV) || {};
     this.mwApiKey = env.MW_API_KEY || localStorage.getItem("ssat_mw_api_key") || "";
     this.geminiApiKey = env.GEMINI_API_KEY || localStorage.getItem("ssat_gemini_api_key") || "";
-    this.knownWordsMap = new Map();
-    if (typeof SSAT_VOCABULARY !== 'undefined') {
-      SSAT_VOCABULARY.forEach(v => {
-        this.knownWordsMap.set(v.word.toUpperCase(), v);
-      });
-    }
   }
 
   updateApiKeys(mwKey, geminiKey) {
@@ -164,39 +158,18 @@ Return ONLY a valid JSON array of objects with no markdown codeblocks or surroun
   }
 
   generateSynonymQuestion(word, idx, mwData = null) {
-    const knownData = this.knownWordsMap.get(word);
-    
     let correctSynonym = "";
     let explanation = "";
     let distractors = [];
 
     if (mwData) {
-      // Use Merriam-Webster's FIRST definition
       explanation = `${word} (Merriam-Webster): ${mwData.definition}`;
-      if (knownData && knownData.synonyms.length > 0) {
-        correctSynonym = knownData.synonyms[0];
-      } else {
-        correctSynonym = mwData.definition;
-      }
+      correctSynonym = mwData.definition;
 
-      const candidateDistractors = knownData ? knownData.antonyms : [];
       const genericDistractors = [
         "rigid", "cautious", "miserable", "submissive", "temporary", "peaceful", "intense", "fleeting"
       ];
-
-      const pool = [...candidateDistractors, ...genericDistractors].filter(d => d.toLowerCase() !== correctSynonym.toLowerCase());
-      distractors = this.shuffleArray(pool).slice(0, 4);
-
-    } else if (knownData) {
-      correctSynonym = knownData.synonyms[0];
-      explanation = `${knownData.word}: ${knownData.definition}`;
-      
-      const candidateDistractors = [
-        ...knownData.antonyms,
-        "rigid", "cautious", "miserable", "submissive", "temporary", "peaceful", "intense", "fleeting"
-      ].filter(d => d.toLowerCase() !== correctSynonym.toLowerCase());
-      
-      distractors = this.shuffleArray(candidateDistractors).slice(0, 4);
+      distractors = this.shuffleArray(genericDistractors.filter(d => d.toLowerCase() !== correctSynonym.toLowerCase())).slice(0, 4);
     } else {
       correctSynonym = this.generateTargetSynonymFallback(word);
       explanation = `${word} is closest in meaning to ${correctSynonym}.`;
@@ -225,8 +198,6 @@ Return ONLY a valid JSON array of objects with no markdown codeblocks or surroun
   }
 
   generateAnalogyQuestion(word, idx, mwData = null) {
-    const knownData = this.knownWordsMap.get(word);
-    
     let stem = "";
     let correctPair = "";
     let wrongPairs = [];
@@ -234,7 +205,6 @@ Return ONLY a valid JSON array of objects with no markdown codeblocks or surroun
     let analogyType = "Synonym / Characteristic Relationship";
 
     if (mwData) {
-      const mainMeaning = mwData.definition;
       stem = `${word} : DEFINITION`;
       correctPair = "fragile : delicate";
       wrongPairs = [
@@ -244,19 +214,6 @@ Return ONLY a valid JSON array of objects with no markdown codeblocks or surroun
         "brave : timid"
       ];
       explanation = `${word} (Merriam-Webster: "${mwData.definition}") and fragile : delicate share a synonymous relationship.`;
-    } else if (knownData) {
-      const syn = knownData.synonyms[0];
-      stem = `${word} : ${syn.toUpperCase()}`;
-      
-      // Create parallel synonym pair
-      correctPair = "fragile : delicate";
-      wrongPairs = [
-        "rigid : flexible",
-        "heavy : light",
-        "swift : slow",
-        "brave : timid"
-      ];
-      explanation = `${word} and ${syn.toUpperCase()} are synonyms; fragile and delicate are also synonyms.`;
     } else {
       stem = `${word} : MEANING`;
       correctPair = "fragile : delicate";

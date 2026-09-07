@@ -10,8 +10,10 @@ class SSATApp {
     this.secondsRemaining = 30;
     this.quizMode = "instant"; // "instant" | "exam"
     
-    // User Analytics State stored in localStorage
+    // User Analytics & Vocab Bank State stored in localStorage
     this.stats = this.loadStats();
+    this.customVocabCards = this.loadCustomVocabCards();
+    this.lastGeneratedCustomSet = [];
 
     this.init();
   }
@@ -21,7 +23,18 @@ class SSATApp {
     this.renderVocabCards();
     this.renderAnalogyGuide();
     this.renderAnalytics();
-    this.startQuiz(); // Default initial quiz load
+  }
+
+  loadCustomVocabCards() {
+    const saved = localStorage.getItem("ssat_custom_vocab_cards");
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [];
+  }
+
+  saveCustomVocabCards() {
+    localStorage.setItem("ssat_custom_vocab_cards", JSON.stringify(this.customVocabCards));
   }
 
   // Load / Save Stats
@@ -163,7 +176,13 @@ class SSATApp {
     const count = parseInt(document.getElementById("select-count").value, 10);
     this.quizMode = document.getElementById("select-mode").value;
 
-    let pool = customSet ? customSet : [...SSAT_QUESTIONS];
+    let pool = customSet ? customSet : (this.lastGeneratedCustomSet && this.lastGeneratedCustomSet.length > 0 ? this.lastGeneratedCustomSet : []);
+
+    if (pool.length === 0) {
+      alert("No practice questions loaded. Please generate custom questions in the Custom Generator tab.");
+      document.querySelector('[data-target="pane-custom"]').click();
+      return;
+    }
 
     // Apply type filter
     if (typeFilter !== "mixed") {
@@ -184,8 +203,8 @@ class SSATApp {
     this.userAnswers.clear();
 
     if (this.currentQuestions.length === 0) {
-      alert("No questions found matching your selected filters. Resetting to all questions.");
-      this.currentQuestions = this.shuffleArray([...SSAT_QUESTIONS]).slice(0, 10);
+      alert("No questions found matching your selected filters.");
+      return;
     }
 
     this.renderCurrentQuestion();
@@ -406,6 +425,21 @@ class SSATApp {
     try {
       const generatedSet = await questionGenerator.generateSet(parsedWords);
       this.lastGeneratedCustomSet = generatedSet;
+
+      // Save generated words into customVocabCards
+      generatedSet.forEach(q => {
+        const word = (q.targetWord || q.stem || '').split(':')[0].trim().toUpperCase();
+        if (word && !this.customVocabCards.some(v => v.word.toUpperCase() === word)) {
+          this.customVocabCards.push({
+            word: word,
+            definition: q.explanation || 'Custom Vocabulary Word',
+            pos: q.type === 'synonym' ? 'SYNONYM' : 'ANALOGY',
+            synonyms: q.options ? q.options.slice(0, 3) : []
+          });
+        }
+      });
+      this.saveCustomVocabCards();
+      this.renderVocabCards();
       
       // Display preview container
       const outputContainer = document.getElementById("custom-questions-output");
@@ -495,7 +529,7 @@ class SSATApp {
   printCustomWorksheetPDF(questionSet) {
     const printableContainer = document.getElementById("custom-printable-worksheet");
     const choiceLetters = ["A", "B", "C", "D", "E"];
-    const targetSet = (questionSet && questionSet.length > 0) ? questionSet : SSAT_QUESTIONS;
+    const targetSet = (questionSet && questionSet.length > 0) ? questionSet : (this.lastGeneratedCustomSet || []);
     const pageSize = 20;
     
     // Chunk array into pages of 20 questions
@@ -593,23 +627,34 @@ class SSATApp {
     grid.innerHTML = "";
 
     const query = filterQuery.toLowerCase().trim();
-    const list = SSAT_VOCABULARY.filter(v => 
+    const list = this.customVocabCards.filter(v => 
       v.word.toLowerCase().includes(query) ||
-      v.definition.toLowerCase().includes(query)
+      (v.definition && v.definition.toLowerCase().includes(query))
     );
+
+    if (list.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1.5rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+          <i class="fa-solid fa-cards-blank" style="font-size: 2.5rem; color: var(--text-secondary); margin-bottom: 1rem; display: block;"></i>
+          <h3 style="margin-bottom: 0.5rem; color: var(--text-primary);">Your Vocab Bank is Empty</h3>
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">Generate practice sets in the <strong>Custom Generator</strong> tab to populate your custom vocabulary flashcards here!</p>
+        </div>
+      `;
+      return;
+    }
 
     list.forEach(v => {
       const card = document.createElement("div");
       card.className = "flashcard";
       
-      const synTags = v.synonyms.map(s => `<span class="syn-tag">${s}</span>`).join("");
+      const synTags = (v.synonyms || []).map(s => `<span class="syn-tag">${s}</span>`).join("");
 
       card.innerHTML = `
         <div class="card-word">
           <span>${v.word}</span>
           <button class="audio-btn" title="Listen Pronunciation"><i class="fa-solid fa-volume-high"></i></button>
         </div>
-        <div class="card-pos">${v.pos} • ${v.phonetic}</div>
+        <div class="card-pos">${v.pos || 'VOCABULARY'}</div>
         <div class="card-def">${v.definition}</div>
         <div class="card-syns">${synTags}</div>
       `;
