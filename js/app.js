@@ -14,6 +14,7 @@ class SSATApp {
     this.stats = this.loadStats();
     this.customVocabCards = this.loadCustomVocabCards();
     this.lastGeneratedCustomSet = [];
+    this.fileHandle = null;
 
     this.init();
   }
@@ -23,6 +24,7 @@ class SSATApp {
     this.renderVocabCards();
     this.renderAnalogyGuide();
     this.renderAnalytics();
+    this.loadCSVOnStart();
   }
 
   loadCustomVocabCards() {
@@ -38,11 +40,62 @@ class SSATApp {
     return [];
   }
 
-  saveCustomVocabCards(triggerDownload = true) {
+  async saveCustomVocabCards() {
     localStorage.setItem("ssat_custom_vocab_cards", JSON.stringify(this.customVocabCards));
-    if (triggerDownload && this.customVocabCards.length > 0) {
-      this.exportVocabBankToCSV(false);
+    // If user has linked a local CSV file handle, write directly to disk automatically!
+    if (this.fileHandle) {
+      try {
+        const csvContent = this.generateCSVContent();
+        const writable = await this.fileHandle.createWritable();
+        await writable.write(csvContent);
+        await writable.close();
+      } catch (err) {
+        console.warn("Auto-write to linked CSV file failed:", err);
+      }
     }
+  }
+
+  async loadCSVOnStart() {
+    if (this.customVocabCards.length === 0) {
+      try {
+        const resp = await fetch('./vocabulary_bank.csv');
+        if (resp.ok) {
+          const text = await resp.text();
+          const parsed = this.parseCSVText(text);
+          if (parsed.length > 0) {
+            this.customVocabCards = parsed;
+            localStorage.setItem("ssat_custom_vocab_cards", JSON.stringify(this.customVocabCards));
+            this.renderVocabCards();
+          }
+        }
+      } catch (e) {}
+    }
+  }
+
+  parseCSVText(csvText) {
+    const lines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0);
+    if (lines.length <= 1) return [];
+    
+    const cards = [];
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      const cols = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+      const cleanCols = cols ? cols.map(c => c.replace(/^"|"$/g, '').replace(/""/g, '"')) : line.split(',');
+      if (cleanCols && cleanCols.length >= 4) {
+        const word = cleanCols[0].trim().toUpperCase();
+        if (word && word !== "WORD") {
+          cards.push({
+            word: word,
+            pos: cleanCols[1] ? cleanCols[1].trim() : 'Word',
+            phonetic: cleanCols[2] ? cleanCols[2].trim() : '',
+            definition: cleanCols[3] ? cleanCols[3].trim() : '',
+            synonyms: cleanCols[4] ? cleanCols[4].split(';').map(s => s.trim()).filter(Boolean) : [],
+            dateAdded: cleanCols[5] ? cleanCols[5].trim() : new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+          });
+        }
+      }
+    }
+    return cards;
   }
 
   // Load / Save Stats
@@ -159,6 +212,13 @@ class SSATApp {
     document.getElementById("save-vocab-cards-btn").addEventListener("click", () => {
       this.handleDirectVocabAdd();
     });
+
+    const syncCsvBtn = document.getElementById("sync-csv-btn");
+    if (syncCsvBtn) {
+      syncCsvBtn.addEventListener("click", () => {
+        this.syncCSVFile();
+      });
+    }
 
     document.getElementById("clear-vocab-bank-btn").addEventListener("click", () => {
       if (confirm("Are you sure you want to clear all cards from your Vocab Bank?")) {
@@ -568,13 +628,7 @@ class SSATApp {
     this.renderVocabCards();
   }
 
-  // Export custom vocabulary bank to CSV file download
-  exportVocabBankToCSV(showAlert = false) {
-    if (this.customVocabCards.length === 0) {
-      if (showAlert) alert("Your Vocabulary Bank is currently empty. Add some vocabulary cards first before exporting!");
-      return;
-    }
-
+  generateCSVContent() {
     const headers = ["Word", "Part of Speech", "Pronunciation", "Definition", "Synonyms", "Date Added"];
     
     const escapeCSV = (field) => {
@@ -592,8 +646,44 @@ class SSATApp {
       escapeCSV(v.dateAdded || '')
     ]);
 
-    const csvContent = [headers.map(h => `"${h}"`).join(","), ...rows.map(r => r.join(","))].join("\n");
+    return [headers.map(h => `"${h}"`).join(","), ...rows.map(r => r.join(","))].join("\n");
+  }
 
+  async syncCSVFile() {
+    if (this.customVocabCards.length === 0) {
+      alert("Your Vocabulary Bank is empty! Add some vocabulary cards first before saving to CSV.");
+      return;
+    }
+
+    const csvContent = this.generateCSVContent();
+
+    if ('showSaveFilePicker' in window) {
+      try {
+        if (!this.fileHandle) {
+          this.fileHandle = await window.showSaveFilePicker({
+            suggestedName: 'vocabulary_bank.csv',
+            types: [{
+              description: 'CSV File',
+              accept: { 'text/csv': ['.csv'] }
+            }]
+          });
+        }
+        const writable = await this.fileHandle.createWritable();
+        await writable.write(csvContent);
+        await writable.close();
+        alert("Saved directly to vocabulary_bank.csv! Future card additions will automatically sync directly to this file.");
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error("Direct file save error:", err);
+          this.triggerCSVDownload(csvContent);
+        }
+      }
+    } else {
+      this.triggerCSVDownload(csvContent);
+    }
+  }
+
+  triggerCSVDownload(csvContent) {
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
