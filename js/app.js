@@ -287,7 +287,7 @@ class SSATApp {
     const shuffleDailyBtn = document.getElementById("shuffle-daily-btn");
     if (shuffleDailyBtn) {
       shuffleDailyBtn.addEventListener("click", () => {
-        this.renderDailyVocabCards();
+        this.renderDailyVocabCards(true);
       });
     }
 
@@ -1003,8 +1003,59 @@ class SSATApp {
     this.renderDailyVocabCards();
   }
 
-  // Render Daily Vocab Words (Single-card stage navigation up to 100 cards)
-  renderDailyVocabCards() {
+  getTodayDateString() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  // Date-seeded pseudorandom shuffle (Mulberry32 PRNG)
+  seededShuffle(array, seedStr) {
+    let seed = 0;
+    for (let i = 0; i < seedStr.length; i++) {
+      seed = (seed << 5) - seed + seedStr.charCodeAt(i);
+      seed |= 0;
+    }
+    
+    const random = () => {
+      let t = seed += 0x6D2B79F5;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 85), t | 73);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  loadDailyState() {
+    const saved = localStorage.getItem("ssat_daily_vocab_state");
+    if (saved) {
+      try {
+        const state = JSON.parse(saved);
+        if (state && state.date === this.getTodayDateString() && Array.isArray(state.cards) && state.cards.length > 0) {
+          return state;
+        }
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  saveDailyState() {
+    if (!this.dailyDeck || this.dailyDeck.length === 0) return;
+    const state = {
+      date: this.getTodayDateString(),
+      cards: this.dailyDeck,
+      currentIndex: this.dailyIndex
+    };
+    localStorage.setItem("ssat_daily_vocab_state", JSON.stringify(state));
+  }
+
+  // Render Daily Vocab Words (Date-seeded persistence up to 100 cards)
+  renderDailyVocabCards(forceReshuffle = false) {
     const container = document.getElementById("daily-single-card-container");
     const progressText = document.getElementById("daily-card-progress-text");
     const progressFill = document.getElementById("daily-card-progress-fill");
@@ -1029,9 +1080,19 @@ class SSATApp {
       return;
     }
 
-    const shuffled = this.shuffleArray(sourcePool);
-    this.dailyDeck = shuffled.slice(0, 100);
-    this.dailyIndex = 0;
+    const todayStr = this.getTodayDateString();
+    const savedState = !forceReshuffle ? this.loadDailyState() : null;
+
+    if (savedState) {
+      this.dailyDeck = savedState.cards;
+      this.dailyIndex = Math.min(savedState.currentIndex || 0, this.dailyDeck.length - 1);
+    } else {
+      const seedKey = forceReshuffle ? `${todayStr}-${Date.now()}` : todayStr;
+      const shuffled = this.seededShuffle(sourcePool, seedKey);
+      this.dailyDeck = shuffled.slice(0, 100);
+      this.dailyIndex = 0;
+      this.saveDailyState();
+    }
 
     this.displayCurrentDailyCard();
   }
@@ -1115,6 +1176,8 @@ class SSATApp {
         });
       });
     }
+
+    this.saveDailyState();
   }
 
   prevDailyCard() {
