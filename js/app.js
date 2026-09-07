@@ -69,7 +69,12 @@ class SSATApp {
 
     // Print Button
     document.getElementById("print-btn").addEventListener("click", () => {
-      window.print();
+      const set = (this.lastGeneratedCustomSet && this.lastGeneratedCustomSet.length > 0)
+        ? this.lastGeneratedCustomSet
+        : (this.currentQuestions && this.currentQuestions.length > 0)
+          ? this.currentQuestions
+          : SSAT_QUESTIONS;
+      this.printCustomWorksheetPDF(set);
     });
 
     // Start Quiz Button
@@ -486,36 +491,69 @@ class SSATApp {
     }
   }
 
-  // Generate Printable PDF Worksheet (Fits 20 questions + Answer Key on 1 single sheet of paper)
+  // Generate Printable PDF Worksheet (Fixed 20 questions per page, Header on Page 1 only, Answer Key on separate page)
   printCustomWorksheetPDF(questionSet) {
     const printableContainer = document.getElementById("custom-printable-worksheet");
     const choiceLetters = ["A", "B", "C", "D", "E"];
-    const targetSet = questionSet.slice(0, 20); // First 20 questions for 1-page worksheet
+    const targetSet = (questionSet && questionSet.length > 0) ? questionSet : SSAT_QUESTIONS;
+    const pageSize = 20;
+    
+    // Chunk array into pages of 20 questions
+    const pages = [];
+    for (let i = 0; i < targetSet.length; i += pageSize) {
+      pages.push(targetSet.slice(i, i + pageSize));
+    }
 
-    // Render 20 Questions
-    let questionsHTML = "";
-    targetSet.forEach((q, idx) => {
-      let optsHTML = q.options.map((optText, i) => 
-        `<span class="print-opt-item"><strong>(${choiceLetters[i]})</strong> ${optText}</span>`
-      ).join(" ");
+    let fullHTML = "";
 
-      const stemText = q.type === 'synonym' ? q.targetWord : q.stem;
-      const typeLabel = q.type === 'synonym' ? 'SYNONYM' : 'ANALOGY';
+    // Render Question Pages
+    pages.forEach((pageQuestions, pageIdx) => {
+      let questionsHTML = "";
+      pageQuestions.forEach((q, qInPageIdx) => {
+        const globalIdx = pageIdx * pageSize + qInPageIdx;
+        let optsHTML = q.options.map((optText, i) => 
+          `<span class="print-opt-item"><strong>(${choiceLetters[i]})</strong> ${optText}</span>`
+        ).join(" ");
 
-      questionsHTML += `
-        <div class="print-q-item">
-          <div class="print-q-stem">
-            <strong>${idx + 1}. ${stemText}</strong>
-            <span class="print-q-type">[${typeLabel}]</span>
+        const stemText = q.type === 'synonym' ? q.targetWord : q.stem;
+        const typeLabel = q.type === 'synonym' ? 'SYNONYM' : 'ANALOGY';
+
+        questionsHTML += `
+          <div class="print-q-item">
+            <div class="print-q-stem">
+              <strong>${globalIdx + 1}. ${stemText}</strong>
+              <span class="print-q-type">[${typeLabel}]</span>
+            </div>
+            <div class="print-q-opts">
+              ${optsHTML}
+            </div>
           </div>
-          <div class="print-q-opts">
-            ${optsHTML}
+        `;
+      });
+
+      // Page 1 gets full header; subsequent question pages omit header
+      const headerHTML = (pageIdx === 0) ? `
+        <div class="print-header">
+          <div class="print-title">SSAT Upper Level Verbal Practice Worksheet</div>
+          <div class="print-subtitle">
+            Name: ___________________________ &nbsp;&nbsp;&nbsp;&nbsp; Date: ______________ &nbsp;&nbsp;&nbsp;&nbsp; Score: ______ / ${targetSet.length}
+          </div>
+        </div>
+      ` : `<div style="height: 15px;"></div>`;
+
+      const pageBreakClass = (pageIdx > 0) ? ' print-page-break' : '';
+
+      fullHTML += `
+        <div class="print-page${pageBreakClass}">
+          ${headerHTML}
+          <div class="print-questions-grid">
+            ${questionsHTML}
           </div>
         </div>
       `;
     });
 
-    // Render Compact Answer Key at bottom
+    // Render Answer Key on separate page
     let answerKeyHTML = "";
     targetSet.forEach((q, idx) => {
       const correctLetter = choiceLetters[q.correctAnswer];
@@ -528,27 +566,19 @@ class SSATApp {
       `;
     });
 
-    printableContainer.innerHTML = `
-      <div class="print-page">
+    fullHTML += `
+      <div class="print-page print-page-break print-answer-key-page">
         <div class="print-header">
           <div class="print-title">SSAT Upper Level Verbal Practice Worksheet</div>
-          <div class="print-subtitle">
-            Name: ___________________________ &nbsp;&nbsp;&nbsp;&nbsp; Date: ______________ &nbsp;&nbsp;&nbsp;&nbsp; Score: ______ / ${targetSet.length}
-          </div>
+          <div class="print-subtitle">ANSWER KEY & EXPLANATIONS</div>
         </div>
-
-        <div class="print-questions-grid">
-          ${questionsHTML}
-        </div>
-
-        <div class="print-answer-key-section">
-          <div class="print-key-title">Answer Key</div>
-          <div class="print-answer-key-list">
-            ${answerKeyHTML}
-          </div>
+        <div class="print-answer-key-list">
+          ${answerKeyHTML}
         </div>
       </div>
     `;
+
+    printableContainer.innerHTML = fullHTML;
 
     // Trigger browser print dialog (Save as PDF)
     window.print();
