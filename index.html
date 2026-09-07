@@ -34,7 +34,7 @@
           <i class="fa-solid fa-cards-blank"></i> Vocabulary Cards
         </button>
         <button class="nav-tab" data-target="pane-quiz">
-          <i class="fa-solid fa-pen-to-square"></i> Practice Quiz
+          <i class="fa-solid fa-calendar-day"></i> Daily vocab words
         </button>
         <button class="nav-tab" data-target="pane-custom">
           <i class="fa-solid fa-wand-magic-sparkles"></i> Custom Generator
@@ -62,10 +62,41 @@
   <!-- Main Content Wrapper -->
   <main class="main-wrapper">
 
-    <!-- 1. PRACTICE QUIZ TAB -->
+    <!-- 1. DAILY VOCAB WORDS TAB -->
     <section id="pane-quiz" class="tab-pane">
-      <!-- Quiz Setup Panel -->
+
+      <!-- Top Section: Daily 100 Vocab Flashcards -->
+      <div class="setup-card no-print" style="margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+          <div>
+            <h2 class="section-title" style="font-size: 1.4rem; margin-bottom: 0.25rem;">
+              <i class="fa-solid fa-calendar-day" style="color: var(--accent-primary);"></i> Daily Vocab Words
+            </h2>
+            <p class="section-subtitle" style="margin-bottom: 0;">
+              Randomly generated 100 flashcards from your vocabulary bank (<span id="daily-card-count">0</span> cards).
+            </p>
+          </div>
+          <button id="shuffle-daily-btn" class="btn-secondary">
+            <i class="fa-solid fa-shuffle"></i> Shuffle Daily 100
+          </button>
+        </div>
+
+        <div id="daily-vocab-grid" class="flashcards-grid" style="max-height: 520px; overflow-y: auto; padding-right: 0.5rem;">
+          <!-- 100 randomly sampled flashcards rendered here -->
+        </div>
+      </div>
+
+      <!-- Bottom Section: Quiz Generator Selection -->
       <div class="setup-card no-print">
+        <div style="margin-bottom: 1.25rem;">
+          <h3 class="section-title" style="font-size: 1.3rem; margin-bottom: 0.25rem;">
+            <i class="fa-solid fa-sliders" style="color: #6366f1;"></i> Generate Practice Quiz
+          </h3>
+          <p class="section-subtitle" style="margin-bottom: 0;">
+            Select options below to generate a timed SSAT Synonym or Analogy practice quiz.
+          </p>
+        </div>
+
         <div class="setup-grid">
           <div class="form-group">
             <label class="form-label" for="select-type">Question Type</label>

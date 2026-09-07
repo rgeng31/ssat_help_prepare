@@ -63,6 +63,7 @@ class SSATApp {
   async init() {
     this.bindEvents();
     this.renderVocabCards();
+    this.renderDailyVocabCards();
     this.renderAnalogyGuide();
     this.renderAnalytics();
 
@@ -276,6 +277,13 @@ class SSATApp {
     if (syncCsvBtn) {
       syncCsvBtn.addEventListener("click", () => {
         this.syncCSVFile();
+      });
+    }
+
+    const shuffleDailyBtn = document.getElementById("shuffle-daily-btn");
+    if (shuffleDailyBtn) {
+      shuffleDailyBtn.addEventListener("click", () => {
+        this.renderDailyVocabCards();
       });
     }
 
@@ -969,6 +977,67 @@ class SSATApp {
       card.querySelector(".delete-card-btn").addEventListener("click", (e) => {
         e.stopPropagation();
         this.deleteSingleVocabCard(v.word);
+      });
+
+      grid.appendChild(card);
+    });
+
+    this.renderDailyVocabCards();
+  }
+
+  // Render Daily Vocab Words (Top 100 randomly generated cards)
+  renderDailyVocabCards() {
+    const grid = document.getElementById("daily-vocab-grid");
+    const countEl = document.getElementById("daily-card-count");
+    if (!grid) return;
+
+    grid.innerHTML = "";
+
+    const sourcePool = [...this.customVocabCards];
+
+    if (sourcePool.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1.5rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+          <i class="fa-solid fa-cards-blank" style="font-size: 2.2rem; color: var(--text-secondary); margin-bottom: 0.75rem; display: block;"></i>
+          <h3 style="margin-bottom: 0.4rem; color: var(--text-primary);">No vocabulary cards in your bank yet</h3>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0;">Add vocabulary in the <strong>Vocabulary Cards</strong> tab to generate your daily 100 cards!</p>
+        </div>
+      `;
+      if (countEl) countEl.textContent = "0";
+      return;
+    }
+
+    const shuffled = this.shuffleArray(sourcePool);
+    const dailyCards = shuffled.slice(0, 100);
+
+    if (countEl) countEl.textContent = dailyCards.length;
+
+    dailyCards.forEach(v => {
+      const card = document.createElement("div");
+      card.className = "flashcard";
+      
+      const synTags = (v.synonyms || []).map(s => `<span class="syn-tag">${s}</span>`).join("");
+      const phoneticText = v.phonetic ? `<div class="card-phonetic">${v.phonetic}</div>` : "";
+      const dateText = v.dateAdded || new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+      card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <span class="card-pos" style="margin-bottom: 0;">${v.pos || 'Word'}</span>
+          <span style="font-size:0.75rem; color:var(--text-secondary); opacity:0.8;"><i class="fa-solid fa-calendar-check"></i> Daily</span>
+        </div>
+        <div class="card-word">
+          <span>${v.word}</span>
+          <button class="audio-btn" title="Listen Pronunciation"><i class="fa-solid fa-volume-high"></i></button>
+        </div>
+        ${phoneticText}
+        <div class="card-def">${v.definition}</div>
+        ${synTags ? `<div class="card-syns">${synTags}</div>` : ''}
+        <div class="card-footer-date"><i class="fa-regular fa-calendar-days"></i> Added: ${dateText}</div>
+      `;
+
+      card.querySelector(".audio-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.speakWord(v.word);
       });
 
       grid.appendChild(card);
