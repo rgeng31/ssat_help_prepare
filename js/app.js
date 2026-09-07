@@ -157,6 +157,10 @@ class SSATApp {
       this.handleDirectVocabAdd();
     });
 
+    document.getElementById("export-csv-btn").addEventListener("click", () => {
+      this.exportVocabBankToCSV();
+    });
+
     document.getElementById("clear-vocab-bank-btn").addEventListener("click", () => {
       if (confirm("Are you sure you want to clear all cards from your Vocab Bank?")) {
         this.customVocabCards = [];
@@ -563,6 +567,43 @@ class SSATApp {
     this.customVocabCards = this.customVocabCards.filter(v => v.word.toUpperCase() !== wordToDelete.toUpperCase());
     this.saveCustomVocabCards();
     this.renderVocabCards();
+  }
+
+  // Export custom vocabulary bank to CSV file download
+  exportVocabBankToCSV() {
+    if (this.customVocabCards.length === 0) {
+      alert("Your Vocabulary Bank is currently empty. Add some vocabulary cards first before exporting!");
+      return;
+    }
+
+    const headers = ["Word", "Part of Speech", "Pronunciation", "Definition", "Synonyms", "Date Added"];
+    
+    const escapeCSV = (field) => {
+      if (field === null || field === undefined) return '""';
+      const str = String(field).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const rows = this.customVocabCards.map(v => [
+      escapeCSV(v.word),
+      escapeCSV(v.pos || 'Word'),
+      escapeCSV(v.phonetic || ''),
+      escapeCSV(v.definition || ''),
+      escapeCSV((v.synonyms || []).join("; ")),
+      escapeCSV(v.dateAdded || '')
+    ]);
+
+    const csvContent = [headers.map(h => `"${h}"`).join(","), ...rows.map(r => r.join(","))].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "vocabulary_bank.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
   // Handle direct vocabulary input in Vocab Bank tab
