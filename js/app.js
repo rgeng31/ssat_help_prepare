@@ -133,6 +133,33 @@ class SSATApp {
       document.getElementById("custom-questions-output").style.display = "none";
     });
 
+    // Vocab Bank Add & Clear Controls
+    const addVocabPanel = document.getElementById("add-vocab-panel");
+    document.getElementById("open-add-vocab-btn").addEventListener("click", () => {
+      addVocabPanel.style.display = "block";
+      document.getElementById("vocab-words-input").focus();
+    });
+
+    document.getElementById("close-add-vocab-btn").addEventListener("click", () => {
+      addVocabPanel.style.display = "none";
+    });
+
+    document.getElementById("cancel-add-vocab-btn").addEventListener("click", () => {
+      addVocabPanel.style.display = "none";
+    });
+
+    document.getElementById("save-vocab-cards-btn").addEventListener("click", () => {
+      this.handleDirectVocabAdd();
+    });
+
+    document.getElementById("clear-vocab-bank-btn").addEventListener("click", () => {
+      if (confirm("Are you sure you want to clear all cards from your Vocab Bank?")) {
+        this.customVocabCards = [];
+        this.saveCustomVocabCards();
+        this.renderVocabCards();
+      }
+    });
+
     // Vocab Search Filter
     document.getElementById("vocab-search-input").addEventListener("input", (e) => {
       this.renderVocabCards(e.target.value);
@@ -522,6 +549,56 @@ class SSATApp {
     } finally {
       generateBtn.disabled = false;
       generateBtn.innerHTML = originalBtnHTML;
+    }
+  }
+
+  // Handle direct vocabulary input in Vocab Bank tab
+  async handleDirectVocabAdd() {
+    const rawText = document.getElementById("vocab-words-input").value;
+    const parsedWords = questionGenerator.parseInput(rawText);
+
+    if (parsedWords.length === 0) {
+      alert("Please enter or paste at least one vocabulary word.");
+      return;
+    }
+
+    const saveBtn = document.getElementById("save-vocab-cards-btn");
+    const origHTML = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Fetching Definitions...';
+
+    try {
+      for (const word of parsedWords) {
+        if (!this.customVocabCards.some(v => v.word.toUpperCase() === word)) {
+          const mwRes = await questionGenerator.fetchMWDefinition(word);
+          if (mwRes) {
+            this.customVocabCards.push({
+              word: word,
+              definition: mwRes.definition,
+              pos: mwRes.pos ? mwRes.pos.toUpperCase() : 'VOCABULARY',
+              synonyms: []
+            });
+          } else {
+            this.customVocabCards.push({
+              word: word,
+              definition: `${word} is a key SSAT vocabulary word.`,
+              pos: 'VOCABULARY',
+              synonyms: []
+            });
+          }
+        }
+      }
+      this.saveCustomVocabCards();
+      this.renderVocabCards();
+      
+      document.getElementById("vocab-words-input").value = "";
+      document.getElementById("add-vocab-panel").style.display = "none";
+    } catch (e) {
+      console.error("Error adding vocabulary words:", e);
+      alert("An error occurred while adding vocabulary. Please try again.");
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = origHTML;
     }
   }
 
