@@ -553,26 +553,16 @@ class SSATApp {
       `;
     });
 
-    // Render Answer Key and Detailed Explanations on separate page
+    // Render Answer Key only on separate page
     let answerKeyHTML = "";
-    let explanationsHTML = "";
 
     targetSet.forEach((q, idx) => {
       const correctLetter = choiceLetters[q.correctAnswer];
       const correctText = q.options[q.correctAnswer];
-      const stemText = q.type === 'synonym' ? q.targetWord : q.stem;
-      const expText = q.explanation || `${stemText} is closest in meaning to ${correctText}.`;
 
       answerKeyHTML += `
         <div class="print-answer-item">
           <strong>${idx + 1}. (${correctLetter})</strong> ${correctText}
-        </div>
-      `;
-
-      explanationsHTML += `
-        <div class="print-exp-item">
-          <strong>Q${idx + 1}. ${stemText} — (${correctLetter}) ${correctText}</strong>
-          <p>${expText}</p>
         </div>
       `;
     });
@@ -581,17 +571,12 @@ class SSATApp {
       <div class="print-page print-page-break print-answer-key-page">
         <div class="print-header">
           <div class="print-title">SSAT Upper Level Verbal Practice Worksheet</div>
-          <div class="print-subtitle">ANSWER KEY & DETAILED EXPLANATIONS</div>
+          <div class="print-subtitle">ANSWER KEY</div>
         </div>
 
-        <div class="print-key-section-title">Quick Answer Key</div>
+        <div class="print-key-section-title">Answer Key</div>
         <div class="print-answer-key-list">
           ${answerKeyHTML}
-        </div>
-
-        <div class="print-key-section-title" style="margin-top: 1.25rem;">Detailed Explanations</div>
-        <div class="print-explanations-list">
-          ${explanationsHTML}
         </div>
       </div>
     `;
