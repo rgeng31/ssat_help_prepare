@@ -552,6 +552,12 @@ class SSATApp {
     }
   }
 
+  deleteSingleVocabCard(wordToDelete) {
+    this.customVocabCards = this.customVocabCards.filter(v => v.word.toUpperCase() !== wordToDelete.toUpperCase());
+    this.saveCustomVocabCards();
+    this.renderVocabCards();
+  }
+
   // Handle direct vocabulary input in Vocab Bank tab
   async handleDirectVocabAdd() {
     const rawText = document.getElementById("vocab-words-input").value;
@@ -567,32 +573,49 @@ class SSATApp {
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Fetching Definitions...';
 
+    let addedCount = 0;
+    let skippedCount = 0;
+
     try {
       for (const word of parsedWords) {
-        if (!this.customVocabCards.some(v => v.word.toUpperCase() === word)) {
-          const mwRes = await questionGenerator.fetchMWDefinition(word);
-          if (mwRes) {
-            this.customVocabCards.push({
-              word: word,
-              definition: mwRes.definition,
-              pos: mwRes.pos ? mwRes.pos.toUpperCase() : 'VOCABULARY',
-              synonyms: []
-            });
-          } else {
-            this.customVocabCards.push({
-              word: word,
-              definition: `${word} is a key SSAT vocabulary word.`,
-              pos: 'VOCABULARY',
-              synonyms: []
-            });
-          }
+        const upperWord = word.toUpperCase();
+        // Check deduplication
+        if (this.customVocabCards.some(v => v.word.toUpperCase() === upperWord)) {
+          skippedCount++;
+          continue;
         }
+
+        const mwRes = await questionGenerator.fetchMWDefinition(word);
+        if (mwRes) {
+          this.customVocabCards.push({
+            word: upperWord,
+            definition: mwRes.definition,
+            pos: mwRes.pos || 'Noun',
+            phonetic: mwRes.phonetic || '',
+            synonyms: mwRes.synonyms || []
+          });
+        } else {
+          this.customVocabCards.push({
+            word: upperWord,
+            definition: `Definition unavailable for ${upperWord}.`,
+            pos: 'Word',
+            phonetic: '',
+            synonyms: []
+          });
+        }
+        addedCount++;
       }
       this.saveCustomVocabCards();
       this.renderVocabCards();
       
       document.getElementById("vocab-words-input").value = "";
       document.getElementById("add-vocab-panel").style.display = "none";
+
+      if (skippedCount > 0 && addedCount > 0) {
+        alert(`Added ${addedCount} new card(s). Skipped ${skippedCount} duplicate word(s).`);
+      } else if (skippedCount > 0 && addedCount === 0) {
+        alert(`All ${skippedCount} word(s) already exist in your Vocab Bank.`);
+      }
     } catch (e) {
       console.error("Error adding vocabulary words:", e);
       alert("An error occurred while adding vocabulary. Please try again.");
@@ -725,20 +748,30 @@ class SSATApp {
       card.className = "flashcard";
       
       const synTags = (v.synonyms || []).map(s => `<span class="syn-tag">${s}</span>`).join("");
+      const phoneticText = v.phonetic ? `<div class="card-phonetic">${v.phonetic}</div>` : "";
 
       card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <span class="card-pos" style="margin-bottom: 0;">${v.pos || 'Word'}</span>
+          <button class="delete-card-btn" title="Delete Card"><i class="fa-solid fa-trash-can"></i></button>
+        </div>
         <div class="card-word">
           <span>${v.word}</span>
           <button class="audio-btn" title="Listen Pronunciation"><i class="fa-solid fa-volume-high"></i></button>
         </div>
-        <div class="card-pos">${v.pos || 'VOCABULARY'}</div>
+        ${phoneticText}
         <div class="card-def">${v.definition}</div>
-        <div class="card-syns">${synTags}</div>
+        ${synTags ? `<div class="card-syns">${synTags}</div>` : ''}
       `;
 
       card.querySelector(".audio-btn").addEventListener("click", (e) => {
         e.stopPropagation();
         this.speakWord(v.word);
+      });
+
+      card.querySelector(".delete-card-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.deleteSingleVocabCard(v.word);
       });
 
       grid.appendChild(card);

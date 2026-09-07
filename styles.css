@@ -649,8 +649,36 @@ body {
 .card-pos {
   font-size: 0.8rem;
   color: var(--accent-primary);
-  font-style: italic;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   margin-bottom: 0.75rem;
+}
+
+.delete-card-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  opacity: 0.7;
+}
+
+.delete-card-btn:hover {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.1);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.card-phonetic {
+  font-size: 0.85rem;
+  color: #c084fc;
+  font-family: 'Outfit', monospace, system-ui;
+  margin-bottom: 0.6rem;
 }
 
 .card-def {

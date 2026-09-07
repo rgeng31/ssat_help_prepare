@@ -33,14 +33,33 @@ class QuestionGenerator {
       const data = await res.json();
 
       if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object' && data[0].shortdef && data[0].shortdef.length > 0) {
-        // Retrieve FIRST definition
         const rawDef = data[0].shortdef[0];
         const cleanDef = rawDef.replace(/\{[^}]+\}/g, '').trim();
-        const pos = data[0].fl || '';
+        
+        // Format Part of Speech (e.g. 'noun' -> 'Noun', 'adjective' -> 'Adjective')
+        let rawFl = data[0].fl || 'Noun';
+        let pos = rawFl.charAt(0).toUpperCase() + rawFl.slice(1).toLowerCase();
+
+        // Extract Phonetic Pronunciation (e.g. 'ˈplī-ə-bəl')
+        let phonetic = '';
+        if (data[0].hwi && data[0].hwi.prs && data[0].hwi.prs.length > 0 && data[0].hwi.prs[0].mw) {
+          phonetic = `${data[0].hwi.prs[0].mw}`;
+        } else if (data[0].hwi && data[0].hwi.hw) {
+          phonetic = `${data[0].hwi.hw.replace(/\*/g, '·')}`;
+        }
+
+        // Extract Synonyms
+        let synonyms = [];
+        if (data[0].meta && data[0].meta.syns && data[0].meta.syns.length > 0 && Array.isArray(data[0].meta.syns[0])) {
+          synonyms = data[0].meta.syns[0].slice(0, 3);
+        }
+
         return {
+          word: word.toUpperCase(),
           definition: cleanDef,
           pos: pos,
-          word: word
+          phonetic: phonetic,
+          synonyms: synonyms
         };
       }
     } catch (err) {
