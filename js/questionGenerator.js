@@ -321,3 +321,6 @@ Return ONLY a valid JSON array of objects with no markdown codeblocks or surroun
 }
 
 const questionGenerator = new QuestionGenerator();
+if (typeof window !== 'undefined') {
+  window.questionGenerator = questionGenerator;
+}

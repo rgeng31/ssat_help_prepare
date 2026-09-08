@@ -99,21 +99,6 @@ class SSATApp {
     return [];
   }
 
-  async saveCustomVocabCards() {
-    localStorage.setItem("ssat_custom_vocab_cards", JSON.stringify(this.customVocabCards));
-    // If user has linked a local CSV file handle, write directly to disk automatically!
-    if (this.fileHandle) {
-      try {
-        const csvContent = this.generateCSVContent();
-        const writable = await this.fileHandle.createWritable();
-        await writable.write(csvContent);
-        await writable.close();
-      } catch (err) {
-        console.warn("Auto-write to linked CSV file failed:", err);
-      }
-    }
-  }
-
   async loadCSVOnStart() {
     try {
       const resp = await fetch('./vocabulary_bank.csv');
@@ -587,7 +572,8 @@ class SSATApp {
   // Custom Generator Handler
   async handleCustomGeneration() {
     const rawText = document.getElementById("custom-words-input").value;
-    const parsedWords = questionGenerator.parseInput(rawText);
+    const qGen = window.questionGenerator || (typeof questionGenerator !== 'undefined' ? questionGenerator : new QuestionGenerator());
+    const parsedWords = qGen.parseInput(rawText);
 
     if (parsedWords.length === 0) {
       alert("Please enter or paste at least one vocabulary word.");
@@ -600,7 +586,7 @@ class SSATApp {
     generateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating Questions...';
 
     try {
-      const generatedSet = await questionGenerator.generateSet(parsedWords);
+      const generatedSet = await qGen.generateSet(parsedWords);
       this.lastGeneratedCustomSet = generatedSet;
 
       // Save generated words into customVocabCards
@@ -795,7 +781,8 @@ class SSATApp {
   // Handle direct vocabulary input in Vocab Bank tab
   async handleDirectVocabAdd() {
     const rawText = document.getElementById("vocab-words-input").value;
-    const parsedWords = questionGenerator.parseInput(rawText);
+    const qGen = window.questionGenerator || (typeof questionGenerator !== 'undefined' ? questionGenerator : new QuestionGenerator());
+    const parsedWords = qGen.parseInput(rawText);
 
     if (parsedWords.length === 0) {
       alert("Please enter or paste at least one vocabulary word.");
@@ -822,7 +809,7 @@ class SSATApp {
 
         let mwRes = null;
         try {
-          mwRes = await questionGenerator.fetchMWDefinition(word);
+          mwRes = await qGen.fetchMWDefinition(word);
         } catch (err) {
           console.warn("MW fetch error for word:", word, err);
         }
@@ -849,8 +836,9 @@ class SSATApp {
         addedCount++;
       }
 
-      this.saveCustomVocabCards();
+      await this.saveCustomVocabCards();
       this.renderVocabCards();
+      this.renderDailyVocabCards();
 
       document.getElementById("vocab-words-input").value = "";
       document.getElementById("add-vocab-panel").style.display = "none";
@@ -986,7 +974,7 @@ class SSATApp {
 
     if (countAllEl) countAllEl.textContent = totalAll;
     if (countLearningEl) countLearningEl.textContent = totalLearning;
-    if (countUncatEl) countUncat.textContent = totalUncat;
+    if (countUncatEl) countUncatEl.textContent = totalUncat;
     if (countMasteredEl) countMasteredEl.textContent = totalMastered;
 
     const query = filterQuery.toLowerCase().trim();
