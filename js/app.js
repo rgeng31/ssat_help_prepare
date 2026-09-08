@@ -820,32 +820,46 @@ class SSATApp {
           continue;
         }
 
-        const mwRes = await questionGenerator.fetchMWDefinition(word);
-        if (mwRes) {
-          this.customVocabCards.push({
-            word: upperWord,
-            definition: mwRes.definition,
-            pos: mwRes.pos || 'Noun',
-            phonetic: mwRes.phonetic || '',
-            synonyms: mwRes.synonyms || [],
-            dateAdded: currentDateStr
-          });
-          addedCount++;
+        let mwRes = null;
+        try {
+          mwRes = await questionGenerator.fetchMWDefinition(word);
+        } catch (err) {
+          console.warn("MW fetch error for word:", word, err);
         }
+
+        if (!mwRes || !mwRes.definition) {
+          mwRes = {
+            word: upperWord,
+            definition: `${upperWord} (SSAT Vocabulary Word).`,
+            pos: 'Vocabulary',
+            phonetic: '',
+            synonyms: []
+          };
+        }
+
+        this.customVocabCards.push({
+          word: upperWord,
+          definition: mwRes.definition,
+          pos: mwRes.pos || 'Vocabulary',
+          phonetic: mwRes.phonetic || '',
+          synonyms: mwRes.synonyms || [],
+          dateAdded: currentDateStr,
+          status: 'uncategorized'
+        });
+        addedCount++;
       }
+
       this.saveCustomVocabCards();
       this.renderVocabCards();
 
-      if (!this.fileHandle && 'showSaveFilePicker' in window && addedCount > 0) {
-        await this.syncCSVFile(true);
-      }
-      
       document.getElementById("vocab-words-input").value = "";
       document.getElementById("add-vocab-panel").style.display = "none";
 
-      if (skippedCount > 0 && addedCount > 0) {
-        alert(`Added ${addedCount} new card(s). Skipped ${skippedCount} duplicate word(s).`);
-      } else if (skippedCount > 0 && addedCount === 0) {
+      if (addedCount > 0) {
+        let msg = `Successfully added ${addedCount} new vocabulary card(s)!`;
+        if (skippedCount > 0) msg += ` Skipped ${skippedCount} duplicate word(s).`;
+        alert(msg);
+      } else if (skippedCount > 0) {
         alert(`All ${skippedCount} word(s) already exist in your Vocab Bank.`);
       }
     } catch (e) {
