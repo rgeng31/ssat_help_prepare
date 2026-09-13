@@ -256,6 +256,39 @@
           Paste your own list of vocabulary words below. The generator will construct SSAT-style Synonym and Analogy practice questions complete with distractors and explanations!
         </p>
 
+        <!-- Option: Select Random Words from Vocabulary Bank -->
+        <div style="background: rgba(168, 85, 247, 0.06); border: 1px dashed rgba(168, 85, 247, 0.3); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.2rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-shuffle" style="color: #a855f7;"></i> Select Random Words from Vocabulary Bank
+              </h3>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0;">
+                Pick <strong style="color: var(--text-primary);">n</strong> random words directly from your saved vocabulary bank to build custom SSAT questions.
+              </p>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <label for="random-word-count-input" style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);">Words (n):</label>
+                <input type="number" id="random-word-count-input" class="form-input" min="1" max="100" value="10" style="width: 70px; text-align: center; font-weight: 700; padding: 0.35rem 0.5rem;" />
+              </div>
+
+              <select id="random-bank-status-filter" class="form-select" style="font-size: 0.82rem; padding: 0.35rem 0.6rem;">
+                <option value="all">All Bank Words</option>
+                <option value="learning">❌ Don't Know Only</option>
+                <option value="uncategorized">❓ Uncategorized Only</option>
+                <option value="mastered">✅ Know Only</option>
+              </select>
+
+              <button id="pick-random-bank-words-btn" class="btn-secondary" style="background: var(--bg-card); border-color: rgba(168, 85, 247, 0.4); color: var(--text-primary); padding: 0.4rem 0.85rem; font-size: 0.85rem;">
+                <i class="fa-solid fa-dice" style="color: #a855f7;"></i> Pick Random Words
+              </button>
+            </div>
+          </div>
+          <div id="random-pick-feedback" style="margin-top: 0.6rem; font-size: 0.85rem; font-weight: 600; display: none;"></div>
+        </div>
+
         <div class="form-group" style="margin-bottom: 1.5rem;">
           <label class="form-label" for="custom-words-input">Vocabulary Words (comma, newline, or space separated)</label>
           <textarea id="custom-words-input" class="form-textarea" rows="6" placeholder="Example: PLIABLE, ENERVATE, FLUMMOX, EXTRICATE, MULTITUDE, PRECIPITOUS..."></textarea>
@@ -316,14 +349,32 @@
               <i class="fa-solid fa-file-csv" style="color: #22c55e;"></i> Save to CSV
             </button>
             <button id="clear-vocab-bank-btn" class="btn-secondary" title="Clear all saved cards">
-              <i class="fa-solid fa-trash-can"></i>
-        <!-- Mastery Status Filter Chips -->
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.25rem; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 1rem;">
-          <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-right: 0.25rem;">Filter Mastery:</span>
-          <button class="filter-chip active" data-status-filter="all">All Words (<span id="count-filter-all">0</span>)</button>
-          <button class="filter-chip" data-status-filter="learning" style="color: #ef4444;"><i class="fa-solid fa-circle-xmark"></i> Don't Know (<span id="count-filter-learning">0</span>)</button>
-          <button class="filter-chip" data-status-filter="uncategorized" style="color: var(--text-secondary);"><i class="fa-solid fa-circle-question"></i> Uncategorized (<span id="count-filter-uncategorized">0</span>)</button>
-          <button class="filter-chip" data-status-filter="mastered" style="color: #22c55e;"><i class="fa-solid fa-circle-check"></i> Know (<span id="count-filter-mastered">0</span>)</button>
+              <i class="fa-solid fa-trash-can"></i> Clear Bank
+            </button>
+          </div>
+        </div>
+
+        <!-- Mastery Breakdown Bar -->
+        <div class="vocab-breakdown-container" style="margin-top: 1.25rem; border-top: 1px dashed var(--border-color); padding-top: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.75rem;">
+            <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary);">
+              Vocabulary Bank Breakdown (<span id="count-filter-all">0</span> Words)
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+              <button class="filter-chip active" data-status-filter="all">All (<span id="count-filter-all-chip">0</span>)</button>
+              <button class="filter-chip" data-status-filter="uncategorized" style="color: #94a3b8;"><i class="fa-solid fa-circle-question"></i> Uncategorized (<span id="count-filter-uncategorized">0</span>)</button>
+              <button class="filter-chip" data-status-filter="learning" style="color: #ef4444;"><i class="fa-solid fa-circle-xmark"></i> Don't Know (<span id="count-filter-learning">0</span>)</button>
+              <button class="filter-chip" data-status-filter="mastered" style="color: #22c55e;"><i class="fa-solid fa-circle-check"></i> Know (<span id="count-filter-mastered">0</span>)</button>
+            </div>
+          </div>
+
+          <!-- Multi-segment Colored Mastery Progress Bar -->
+          <div style="height: 10px; border-radius: 8px; background: rgba(255,255,255,0.08); overflow: hidden; display: flex;" title="Vocabulary Status Proportions">
+            <div id="bar-uncategorized" style="height: 100%; width: 0%; background: #94a3b8; transition: width 0.3s;" title="Uncategorized"></div>
+            <div id="bar-learning" style="height: 100%; width: 0%; background: #ef4444; transition: width 0.3s;" title="Don't Know"></div>
+            <div id="bar-mastered" style="height: 100%; width: 0%; background: #22c55e; transition: width 0.3s;" title="Know"></div>
+          </div>
         </div>
 
         <!-- Add Vocabulary Input Panel (Collapsible Drawer) -->
@@ -332,7 +383,7 @@
             <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 0;">
               <i class="fa-solid fa-plus-circle" style="color: var(--accent-primary);"></i> Add Words to Vocab Bank
             </h3>
-            <button id="close-add-vocab-btn" class="btn-icon" title="Close Panel">
+            <button id="close-add-vocab-btn" class="btn-icon" title="Close Panel" onclick="document.getElementById('add-vocab-panel').style.display='none';">
               <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
@@ -342,11 +393,12 @@
           <div class="form-group" style="margin-bottom: 1.25rem;">
             <textarea id="vocab-words-input" class="form-textarea" rows="4" placeholder="Example: PLIABLE, ENERVATE, FLUMMOX, EXTRICATE, PRECIPITOUS..."></textarea>
           </div>
+          <div id="add-vocab-feedback" style="display: none; padding: 0.65rem 0.9rem; border-radius: var(--radius-sm); font-size: 0.88rem; font-weight: 500; margin-bottom: 1rem; transition: all 0.2s;"></div>
           <div style="display: flex; gap: 0.75rem;">
             <button id="save-vocab-cards-btn" class="btn-primary">
               <i class="fa-solid fa-bolt"></i> Generate & Save Flashcards
             </button>
-            <button id="cancel-add-vocab-btn" class="btn-secondary">
+            <button id="cancel-add-vocab-btn" class="btn-secondary" onclick="document.getElementById('add-vocab-panel').style.display='none';">
               Cancel
             </button>
           </div>

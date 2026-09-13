@@ -40,6 +40,198 @@ function storeFileHandle(handle) {
     }
   });
 }
+const SSAT_QUESTIONS = [
+  {
+    id: "ssat-syn-1",
+    type: "synonym",
+    difficulty: "easy",
+    targetWord: "PLIABLE",
+    options: ["rigid", "stubborn", "flexible", "fragile", "modern"],
+    correctAnswer: 2,
+    explanation: "PLIABLE means easily bent or flexible."
+  },
+  {
+    id: "ssat-syn-2",
+    type: "synonym",
+    difficulty: "medium",
+    targetWord: "ENERVATE",
+    options: ["energize", "weaken", "excite", "clarify", "insult"],
+    correctAnswer: 1,
+    explanation: "ENERVATE means to cause someone to feel drained of energy or vitality; to weaken."
+  },
+  {
+    id: "ssat-syn-3",
+    type: "synonym",
+    difficulty: "hard",
+    targetWord: "PRECIPITOUS",
+    options: ["gradual", "steep", "cautious", "spacious", "harmful"],
+    correctAnswer: 1,
+    explanation: "PRECIPITOUS means dangerously high or steep."
+  },
+  {
+    id: "ssat-syn-4",
+    type: "synonym",
+    difficulty: "medium",
+    targetWord: "CIRCUMSPECT",
+    options: ["careless", "cautious", "round", "transparent", "hasty"],
+    correctAnswer: 1,
+    explanation: "CIRCUMSPECT means wary and unwilling to take risks; cautious."
+  },
+  {
+    id: "ssat-syn-5",
+    type: "synonym",
+    difficulty: "hard",
+    targetWord: "FLUMMOX",
+    options: ["perplex", "enlighten", "flatter", "construct", "pacify"],
+    correctAnswer: 0,
+    explanation: "FLUMMOX means to confuse or perplex someone greatly."
+  },
+  {
+    id: "ssat-syn-6",
+    type: "synonym",
+    difficulty: "easy",
+    targetWord: "MULTITUDE",
+    options: ["scarcity", "horde", "loneliness", "segment", "poverty"],
+    correctAnswer: 1,
+    explanation: "MULTITUDE means a large number or host of people or things."
+  },
+  {
+    id: "ssat-syn-7",
+    type: "synonym",
+    difficulty: "medium",
+    targetWord: "PUGNACIOUS",
+    options: ["combative", "friendly", "fearful", "slothful", "generous"],
+    correctAnswer: 0,
+    explanation: "PUGNACIOUS means eager or quick to argue, quarrel, or fight; combative."
+  },
+  {
+    id: "ssat-syn-8",
+    type: "synonym",
+    difficulty: "hard",
+    targetWord: "SUMPTUOUSNESS",
+    options: ["poverty", "luxuriousness", "simplicity", "stinginess", "darkness"],
+    correctAnswer: 1,
+    explanation: "SUMPTUOUSNESS means splendid and expensive-looking state; luxuriousness."
+  },
+  {
+    id: "ssat-syn-9",
+    type: "synonym",
+    difficulty: "medium",
+    targetWord: "EXTRICATE",
+    options: ["entangle", "free", "complicate", "accuse", "observe"],
+    correctAnswer: 1,
+    explanation: "EXTRICATE means to free someone or something from a constraint or difficulty."
+  },
+  {
+    id: "ssat-syn-10",
+    type: "synonym",
+    difficulty: "easy",
+    targetWord: "DOCILE",
+    options: ["submissive", "rebellious", "wild", "clever", "harsh"],
+    correctAnswer: 0,
+    explanation: "DOCILE means ready to accept control or instruction; submissive."
+  },
+  {
+    id: "ssat-ana-1",
+    type: "analogy",
+    difficulty: "easy",
+    stem: "PLIABLE : BEND",
+    options: ["rigid : break", "fragile : shatter", "heavy : carry", "liquid : freeze", "transparent : hide"],
+    correctAnswer: 1,
+    explanation: "Characteristic Result: A pliable item easily bends; a fragile item easily shatters.",
+    analogyType: "Propensity / Characteristic Result"
+  },
+  {
+    id: "ssat-ana-2",
+    type: "analogy",
+    difficulty: "medium",
+    stem: "ENERVATE : STRENGTH",
+    options: ["pacify : anger", "dampen : water", "illuminate : light", "enrich : wealth", "flatten : height"],
+    correctAnswer: 0,
+    explanation: "Antonymic Action: To enervate is to deprive of strength; to pacify is to deprive of anger.",
+    analogyType: "Deprivation / Antonymic Action"
+  },
+  {
+    id: "ssat-ana-3",
+    type: "analogy",
+    difficulty: "hard",
+    stem: "PRECIPITOUS : SLOPE",
+    options: ["torrid : temperature", "shallow : depth", "narrow : width", "quiet : volume", "vast : area"],
+    correctAnswer: 0,
+    explanation: "Degree / Extreme Quality: Precipitous describes an extreme slope; torrid describes an extreme temperature.",
+    analogyType: "Degree of Intensity"
+  },
+  {
+    id: "ssat-ana-4",
+    type: "analogy",
+    difficulty: "medium",
+    stem: "CIRCUMSPECT : CAUTION",
+    options: ["audacious : fear", "pugnacious : hostility", "docile : rebellion", "thrifty : waste", "frugal : luxury"],
+    correctAnswer: 1,
+    explanation: "Defining Characteristic: A circumspect person displays caution; a pugnacious person displays hostility.",
+    analogyType: "Characteristic Trait"
+  },
+  {
+    id: "ssat-ana-5",
+    type: "analogy",
+    difficulty: "hard",
+    stem: "FLUMMOX : BEWILDER",
+    options: ["mollify : irritate", "extricate : entangle", "elucidate : clarify", "subdue : empower", "enervate : energize"],
+    correctAnswer: 2,
+    explanation: "Synonyms: Flummox and bewilder are synonyms; elucidate and clarify are synonyms.",
+    analogyType: "Synonym Relationship"
+  },
+  {
+    id: "ssat-ana-6",
+    type: "analogy",
+    difficulty: "easy",
+    stem: "ANTHOLOGY : POEMS",
+    options: ["archipelago : islands", "team : coach", "library : building", "constellation : telescope", "forest : woodcutter"],
+    correctAnswer: 0,
+    explanation: "Part to Whole / Grouping: An anthology is a collection of poems; an archipelago is a collection of islands.",
+    analogyType: "Item to Category / Collection"
+  },
+  {
+    id: "ssat-ana-7",
+    type: "analogy",
+    difficulty: "medium",
+    stem: "QUALM : DOUBT",
+    options: ["solace : comfort", "hazard : safety", "praise : blame", "malice : kindness", "guile : honesty"],
+    correctAnswer: 0,
+    explanation: "Synonyms: A qualm is a feeling of doubt; solace is a feeling of comfort.",
+    analogyType: "Synonym Relationship"
+  },
+  {
+    id: "ssat-ana-8",
+    type: "analogy",
+    difficulty: "hard",
+    stem: "FATUOUS : WISDOM",
+    options: ["despicable : honor", "generous : charity", "cautious : care", "honest : truth", "meticulous : detail"],
+    correctAnswer: 0,
+    explanation: "Lack of Trait: Fatuous means lacking wisdom; despicable means lacking honor.",
+    analogyType: "Absence / Deprivation of Quality"
+  },
+  {
+    id: "ssat-ana-9",
+    type: "analogy",
+    difficulty: "easy",
+    stem: "SCALPEL : SURGEON",
+    options: ["gavel : judge", "book : reader", "canvas : gallery", "syringe : patient", "car : mechanic"],
+    correctAnswer: 0,
+    explanation: "Tool to Worker: A scalpel is a primary tool used by a surgeon; a gavel is used by a judge.",
+    analogyType: "Tool to User"
+  },
+  {
+    id: "ssat-ana-10",
+    type: "analogy",
+    difficulty: "medium",
+    stem: "CONVALESCENCE : RECOVERY",
+    options: ["incubation : development", "stagnation : progress", "recreation : fatigue", "vacation : work", "dormancy : activity"],
+    correctAnswer: 0,
+    explanation: "Process to Outcome: Convalescence is a period of recovery; incubation is a period of development.",
+    analogyType: "Process and Purpose"
+  }
+];
 
 class SSATApp {
   constructor() {
@@ -61,16 +253,13 @@ class SSATApp {
     this.dailyDeck = [];
     this.dailyIndex = 0;
     this.activeStatusFilter = "all";
+    this.cardsAutoRefreshInterval = null;
 
     this.init();
   }
 
   async init() {
     this.bindEvents();
-    this.renderVocabCards();
-    this.renderDailyVocabCards();
-    this.renderAnalogyGuide();
-    this.renderAnalytics();
 
     // Restore saved CSV file handle from IndexedDB if available
     try {
@@ -83,7 +272,39 @@ class SSATApp {
       }
     } catch (e) {}
 
-    this.loadCSVOnStart();
+    await this.loadCSVOnStart();
+
+    this.renderVocabCards();
+    this.renderDailyVocabCards();
+    this.renderAnalogyGuide();
+    this.renderAnalytics();
+
+    // Start 30s auto-refresh for Vocabulary Cards tab
+    this.startCardsAutoRefresh();
+
+    this.enrichMissingSynonyms();
+  }
+
+  async enrichMissingSynonyms() {
+    let updatedCount = 0;
+    const qGen = window.questionGenerator || (typeof questionGenerator !== 'undefined' ? questionGenerator : new QuestionGenerator());
+
+    for (const card of this.customVocabCards) {
+      if (!card.synonyms || card.synonyms.length === 0) {
+        try {
+          const syns = await qGen.fetchSynonymsDatamuse(card.word);
+          if (syns && syns.length > 0) {
+            card.synonyms = syns;
+            updatedCount++;
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (updatedCount > 0) {
+      this.saveCustomVocabCards();
+      this.renderVocabCards();
+    }
   }
 
   loadCustomVocabCards() {
@@ -99,9 +320,18 @@ class SSATApp {
     return [];
   }
 
+  async saveCustomVocabCards() {
+    localStorage.setItem("ssat_custom_vocab_cards", JSON.stringify(this.customVocabCards));
+    try {
+      await this.syncCSVFile(false);
+    } catch (err) {
+      console.warn("CSV auto-sync failed:", err);
+    }
+  }
+
   async loadCSVOnStart() {
     try {
-      const resp = await fetch('./vocabulary_bank.csv');
+      const resp = await fetch('./vocabulary_bank.csv?t=' + Date.now());
       if (resp.ok) {
         const text = await resp.text();
         const parsed = this.parseCSVText(text);
@@ -110,16 +340,94 @@ class SSATApp {
             this.customVocabCards = parsed;
           } else {
             parsed.forEach(c => {
-              if (!this.customVocabCards.some(v => v.word.toUpperCase() === c.word.toUpperCase())) {
+              const existing = this.customVocabCards.find(v => v.word.toUpperCase() === c.word.toUpperCase());
+              if (!existing) {
                 this.customVocabCards.push(c);
+              } else if (c.synonyms && c.synonyms.length > 0 && (!existing.synonyms || existing.synonyms.length === 0)) {
+                existing.synonyms = c.synonyms;
               }
             });
           }
           localStorage.setItem("ssat_custom_vocab_cards", JSON.stringify(this.customVocabCards));
           this.renderVocabCards();
+          this.renderDailyVocabCards();
         }
       }
     } catch (e) {}
+  }
+
+  startCardsAutoRefresh() {
+    // 30-second periodic timer disabled: saving occurs instantly on every card update/modification.
+    this.stopCardsAutoRefresh();
+  }
+
+  stopCardsAutoRefresh() {
+    if (this.cardsAutoRefreshInterval) {
+      clearInterval(this.cardsAutoRefreshInterval);
+      this.cardsAutoRefreshInterval = null;
+    }
+  }
+
+  async checkAndReloadCSV() {
+    try {
+      const resp = await fetch('./vocabulary_bank.csv?t=' + Date.now());
+      if (resp.ok) {
+        const text = await resp.text();
+        const parsed = this.parseCSVText(text);
+        if (parsed.length > 0) {
+          let hasChanges = false;
+          
+          if (this.customVocabCards.length === 0) {
+            this.customVocabCards = parsed;
+            hasChanges = true;
+          } else {
+            parsed.forEach(c => {
+              const existingIndex = this.customVocabCards.findIndex(v => v.word.toUpperCase() === c.word.toUpperCase());
+              if (existingIndex === -1) {
+                this.customVocabCards.push(c);
+                hasChanges = true;
+              } else {
+                const existing = this.customVocabCards[existingIndex];
+                if (c.definition && c.definition !== existing.definition && !c.definition.includes("(SSAT Vocabulary Word)")) {
+                  existing.definition = c.definition;
+                  hasChanges = true;
+                }
+                if (c.pos && c.pos !== existing.pos && c.pos !== 'Word') {
+                  existing.pos = c.pos;
+                  hasChanges = true;
+                }
+                if (c.phonetic && c.phonetic !== existing.phonetic) {
+                  existing.phonetic = c.phonetic;
+                  hasChanges = true;
+                }
+                if (c.synonyms && c.synonyms.length > 0 && JSON.stringify(c.synonyms) !== JSON.stringify(existing.synonyms)) {
+                  existing.synonyms = c.synonyms;
+                  hasChanges = true;
+                }
+                if (c.status && c.status !== existing.status) {
+                  existing.status = c.status;
+                  hasChanges = true;
+                }
+              }
+            });
+          }
+
+          if (hasChanges) {
+            localStorage.setItem("ssat_custom_vocab_cards", JSON.stringify(this.customVocabCards));
+            
+            // Only re-render if user is not actively editing a card
+            const isEditing = document.querySelector(".edit-flashcard-form");
+            if (!isEditing) {
+              const currentSearch = document.getElementById("vocab-search-input") ? document.getElementById("vocab-search-input").value : "";
+              this.renderVocabCards(currentSearch);
+              this.renderDailyVocabCards();
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Auto CSV refresh error:", e);
+    }
   }
 
   parseCSVText(csvText) {
@@ -134,14 +442,51 @@ class SSATApp {
       if (cleanCols && cleanCols.length >= 4) {
         const word = cleanCols[0].trim().toUpperCase();
         if (word && word !== "WORD") {
+          const pos = cleanCols[1] ? cleanCols[1].trim() : 'Word';
+          const phonetic = cleanCols[2] ? cleanCols[2].trim() : '';
+          const definition = cleanCols[3] ? cleanCols[3].trim() : '';
+          const synonyms = cleanCols[4] ? cleanCols[4].split(';').map(s => s.trim()).filter(Boolean) : [];
+          
+          let antonyms = [];
+          let example = '';
+          let dateAdded = '';
+          let rawMarking = '';
+          let rawStatus = '';
+
+          if (cleanCols.length >= 10) {
+            antonyms = cleanCols[5] ? cleanCols[5].split(';').map(s => s.trim()).filter(Boolean) : [];
+            example = cleanCols[6] ? cleanCols[6].trim() : '';
+            dateAdded = cleanCols[7] ? cleanCols[7].trim() : '';
+            rawMarking = cleanCols[8] ? cleanCols[8].trim() : '';
+            rawStatus = cleanCols[9] ? cleanCols[9].trim().toLowerCase() : '';
+          } else {
+            dateAdded = cleanCols[5] ? cleanCols[5].trim() : '';
+            rawStatus = cleanCols[6] ? cleanCols[6].trim().toLowerCase() : '';
+          }
+
+          if (!dateAdded) {
+            dateAdded = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+          }
+
+          let status = 'uncategorized';
+          if (rawStatus === 'learning' || rawMarking === "Don't know" || rawMarking === "learning") {
+            status = 'learning';
+          } else if (rawStatus === 'mastered' || rawMarking === "Know" || rawMarking === "mastered") {
+            status = 'mastered';
+          } else {
+            status = 'uncategorized';
+          }
+
           cards.push({
             word: word,
-            pos: cleanCols[1] ? cleanCols[1].trim() : 'Word',
-            phonetic: cleanCols[2] ? cleanCols[2].trim() : '',
-            definition: cleanCols[3] ? cleanCols[3].trim() : '',
-            synonyms: cleanCols[4] ? cleanCols[4].split(';').map(s => s.trim()).filter(Boolean) : [],
-            dateAdded: cleanCols[5] ? cleanCols[5].trim() : new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-            status: cleanCols[6] ? cleanCols[6].trim().toLowerCase() : 'uncategorized'
+            pos: pos,
+            phonetic: phonetic,
+            definition: definition,
+            synonyms: synonyms,
+            antonyms: antonyms,
+            example: example,
+            dateAdded: dateAdded,
+            status: status
           });
         }
       }
@@ -178,6 +523,13 @@ class SSATApp {
         
         tab.classList.add("active");
         document.getElementById(targetId).classList.add("active");
+
+        if (targetId === "pane-cards") {
+          this.startCardsAutoRefresh();
+          this.checkAndReloadCSV();
+        } else {
+          this.stopCardsAutoRefresh();
+        }
       });
     });
 
@@ -235,6 +587,13 @@ class SSATApp {
       this.handleCustomGeneration();
     });
 
+    const pickRandomBtn = document.getElementById("pick-random-bank-words-btn");
+    if (pickRandomBtn) {
+      pickRandomBtn.addEventListener("click", () => {
+        this.handlePickRandomBankWords();
+      });
+    }
+
     document.getElementById("load-sample-words-btn").addEventListener("click", () => {
       const sampleText = "PLIABLE, ENERVATE, FLUMMOX, EXTRICATE, MULTITUDE, PLUNDERING, PRECIPITOUS, SUMPTUOUSNESS, QUALM, INFAMY, FATUOUS, CONVALESCENCE, REPROACH, PUGNACIOUS, TEMPORAL, CIRCUMSPECT, LADEN, PRETENTIOUS, CONFLUENCE, ANTHOLOGY, HEARTH, IMPLICATE, HILARITY, DOCILE, BOURGEOIS, WRETCHED, SERF";
       document.getElementById("custom-words-input").value = sampleText;
@@ -243,6 +602,8 @@ class SSATApp {
     document.getElementById("clear-custom-btn").addEventListener("click", () => {
       document.getElementById("custom-words-input").value = "";
       document.getElementById("custom-questions-output").style.display = "none";
+      const pickFeedback = document.getElementById("random-pick-feedback");
+      if (pickFeedback) pickFeedback.style.display = "none";
     });
 
     // Vocab Bank Add & Clear Controls
@@ -280,10 +641,28 @@ class SSATApp {
       });
     });
 
+    const prevDailyBtn = document.getElementById("prev-daily-card-btn");
+    if (prevDailyBtn) {
+      prevDailyBtn.addEventListener("click", () => {
+        this.prevDailyCard();
+      });
+    }
+
     const nextDailyBtn = document.getElementById("next-daily-card-btn");
     if (nextDailyBtn) {
       nextDailyBtn.addEventListener("click", () => {
         this.nextDailyCard();
+      });
+    }
+
+    const reviewMissedBtn = document.getElementById("review-missed-btn");
+    if (reviewMissedBtn) {
+      reviewMissedBtn.addEventListener("click", () => {
+        if (this.stats.missedQuestions && this.stats.missedQuestions.length > 0) {
+          this.startQuiz(this.stats.missedQuestions);
+        } else {
+          alert("No missed questions in queue to review!");
+        }
       });
     }
 
@@ -338,7 +717,7 @@ class SSATApp {
     const count = parseInt(document.getElementById("select-count").value, 10);
     this.quizMode = document.getElementById("select-mode").value;
 
-    let pool = customSet ? customSet : (this.lastGeneratedCustomSet && this.lastGeneratedCustomSet.length > 0 ? this.lastGeneratedCustomSet : []);
+    let pool = customSet ? customSet : (this.lastGeneratedCustomSet && this.lastGeneratedCustomSet.length > 0 ? this.lastGeneratedCustomSet : SSAT_QUESTIONS);
 
     if (pool.length === 0) {
       alert("No practice questions loaded. Please generate custom questions in the Custom Generator tab.");
@@ -569,6 +948,58 @@ class SSATApp {
     }
   }
 
+  // Pick random n words from Vocabulary Bank for Custom Generator
+  handlePickRandomBankWords() {
+    const feedbackEl = document.getElementById("random-pick-feedback");
+    const countInput = document.getElementById("random-word-count-input");
+    const filterSelect = document.getElementById("random-bank-status-filter");
+    
+    let requestedCount = parseInt(countInput ? countInput.value : 10, 10);
+    if (isNaN(requestedCount) || requestedCount <= 0) requestedCount = 10;
+
+    const filterStatus = filterSelect ? filterSelect.value : 'all';
+
+    let availableCards = [...this.customVocabCards];
+    if (filterStatus === 'learning') {
+      availableCards = availableCards.filter(v => v.status === 'learning');
+    } else if (filterStatus === 'uncategorized') {
+      availableCards = availableCards.filter(v => !v.status || v.status === 'uncategorized');
+    } else if (filterStatus === 'mastered') {
+      availableCards = availableCards.filter(v => v.status === 'mastered');
+    }
+
+    if (availableCards.length === 0) {
+      if (feedbackEl) {
+        feedbackEl.style.display = "block";
+        feedbackEl.style.color = "#ef4444";
+        const labelText = filterSelect ? filterSelect.options[filterSelect.selectedIndex].text : filterStatus;
+        feedbackEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> No saved words found in your Vocabulary Bank matching "${labelText}". Add words in the Vocabulary Cards tab first!`;
+      }
+      return;
+    }
+
+    // Shuffle array (Fisher-Yates)
+    const shuffled = [...availableCards];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    const selectedCards = shuffled.slice(0, Math.min(requestedCount, shuffled.length));
+    const wordListStr = selectedCards.map(c => c.word).join(", ");
+
+    const inputArea = document.getElementById("custom-words-input");
+    if (inputArea) {
+      inputArea.value = wordListStr;
+    }
+
+    if (feedbackEl) {
+      feedbackEl.style.display = "block";
+      feedbackEl.style.color = "#22c55e";
+      feedbackEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Randomly selected ${selectedCards.length} word(s) from your Vocabulary Bank! Click <strong>Generate SSAT Questions</strong> below to build your practice test.`;
+    }
+  }
+
   // Custom Generator Handler
   async handleCustomGeneration() {
     const rawText = document.getElementById("custom-words-input").value;
@@ -696,7 +1127,7 @@ class SSATApp {
     this.renderVocabCards();
   }
 
-  setCardStatus(word, status) {
+  setCardStatus(word, status, keepFlipped = false) {
     const card = this.customVocabCards.find(v => v.word.toUpperCase() === word.toUpperCase());
     if (card) {
       card.status = status;
@@ -706,12 +1137,37 @@ class SSATApp {
       if (inDaily) inDaily.status = status;
       
       this.renderVocabCards(document.getElementById("vocab-search-input") ? document.getElementById("vocab-search-input").value : "");
+      this.displayCurrentDailyCard(keepFlipped);
+    }
+  }
+
+  updateVocabCard(originalWord, updatedFields) {
+    const card = this.customVocabCards.find(v => v.word.toUpperCase() === originalWord.toUpperCase());
+    if (card) {
+      Object.assign(card, updatedFields);
+      this.saveCustomVocabCards();
+      
+      const inDaily = this.dailyDeck.find(v => v.word.toUpperCase() === originalWord.toUpperCase());
+      if (inDaily) Object.assign(inDaily, updatedFields);
+
+      this.renderVocabCards(document.getElementById("vocab-search-input") ? document.getElementById("vocab-search-input").value : "");
       this.displayCurrentDailyCard();
     }
   }
 
   generateCSVContent() {
-    const headers = ["Word", "Part of Speech", "Pronunciation", "Definition", "Synonyms", "Date Added", "Mastery Status"];
+    const headers = [
+      "Word",
+      "Part of Speech",
+      "Pronunciation",
+      "Definition",
+      "Synonyms",
+      "Antonyms",
+      "Example Sentence",
+      "Date Added",
+      "Marking",
+      "Mastery Status"
+    ];
     
     const escapeCSV = (field) => {
       if (field === null || field === undefined) return '""';
@@ -719,13 +1175,22 @@ class SSATApp {
       return `"${str}"`;
     };
 
+    const getMarkingLabel = (status) => {
+      if (status === 'learning') return "Don't know";
+      if (status === 'mastered') return "Know";
+      return "Uncategorized";
+    };
+
     const rows = this.customVocabCards.map(v => [
       escapeCSV(v.word),
       escapeCSV(v.pos || 'Word'),
       escapeCSV(v.phonetic || ''),
       escapeCSV(v.definition || ''),
-      escapeCSV((v.synonyms || []).join("; ")),
+      escapeCSV(Array.isArray(v.synonyms) ? v.synonyms.join("; ") : (v.synonyms || '')),
+      escapeCSV(Array.isArray(v.antonyms) ? v.antonyms.join("; ") : (v.antonyms || '')),
+      escapeCSV(v.example || ''),
       escapeCSV(v.dateAdded || ''),
+      escapeCSV(getMarkingLabel(v.status)),
       escapeCSV(v.status || 'uncategorized')
     ]);
 
@@ -733,14 +1198,52 @@ class SSATApp {
   }
 
   async syncCSVFile(promptIfUnlinked = true) {
-    if (this.customVocabCards.length === 0) return;
-
     const csvContent = this.generateCSVContent();
+
+    // 1. Try sending directly to local Python server endpoint to overwrite vocabulary_bank.csv on disk
+    try {
+      let resp = await fetch('/api/save-csv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/csv;charset=utf-8' },
+        body: csvContent
+      });
+      if (!resp.ok) {
+        resp = await fetch('http://127.0.0.1:8080/api/save-csv', {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/csv;charset=utf-8' },
+          body: csvContent
+        });
+      }
+      if (resp.ok) {
+        const resData = await resp.json();
+        if (resData.success) {
+          console.log("[CSV Sync] Successfully saved vocabulary_bank.csv directly to disk.");
+          return true;
+        }
+      }
+    } catch (apiErr) {
+      try {
+        const resp = await fetch('http://127.0.0.1:8080/api/save-csv', {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/csv;charset=utf-8' },
+          body: csvContent
+        });
+        if (resp.ok) {
+          const resData = await resp.json();
+          if (resData.success) {
+            console.log("[CSV Sync] Successfully saved vocabulary_bank.csv directly to disk.");
+            return true;
+          }
+        }
+      } catch (err2) {
+        console.warn("[CSV Sync] Server save-csv API endpoint unreachable or failed, falling back:", err2);
+      }
+    }
 
     if ('showSaveFilePicker' in window) {
       try {
         if (!this.fileHandle) {
-          if (!promptIfUnlinked) return;
+          if (!promptIfUnlinked) return false;
           this.fileHandle = await window.showSaveFilePicker({
             suggestedName: 'vocabulary_bank.csv',
             types: [{
@@ -752,18 +1255,35 @@ class SSATApp {
             await storeFileHandle(this.fileHandle);
           }
         }
-        const writable = await this.fileHandle.createWritable();
-        await writable.write(csvContent);
-        await writable.close();
+
+        if (this.fileHandle) {
+          const perm = await this.fileHandle.queryPermission({ mode: 'readwrite' });
+          if (perm !== 'granted') {
+            const req = await this.fileHandle.requestPermission({ mode: 'readwrite' });
+            if (req !== 'granted') {
+              throw new Error('Permission not granted');
+            }
+          }
+          const writable = await this.fileHandle.createWritable();
+          await writable.write(csvContent);
+          await writable.close();
+          return true;
+        }
       } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error("Direct file save error:", err);
+        if (err.name === 'AbortError') return false;
+        console.warn("Direct file save error, falling back to download:", err);
+        if (promptIfUnlinked) {
           this.triggerCSVDownload(csvContent);
+          return true;
         }
       }
     } else {
-      this.triggerCSVDownload(csvContent);
+      if (promptIfUnlinked) {
+        this.triggerCSVDownload(csvContent);
+        return true;
+      }
     }
+    return false;
   }
 
   triggerCSVDownload(csvContent) {
@@ -780,33 +1300,52 @@ class SSATApp {
 
   // Handle direct vocabulary input in Vocab Bank tab
   async handleDirectVocabAdd() {
-    const rawText = document.getElementById("vocab-words-input").value;
+    const rawInput = document.getElementById("vocab-words-input") ? document.getElementById("vocab-words-input").value : "";
     const qGen = window.questionGenerator || (typeof questionGenerator !== 'undefined' ? questionGenerator : new QuestionGenerator());
-    const parsedWords = qGen.parseInput(rawText);
+    let parsedWords = qGen.parseInput(rawInput);
+
+    if (parsedWords.length === 0 && rawInput.trim().length > 0) {
+      parsedWords = rawInput.split(/[\n,;:]+/).map(w => w.trim().replace(/^[^a-zA-Z]+|[^a-zA-Z]+$/g, '').toUpperCase()).filter(w => w.length > 1);
+    }
+
+    const feedbackEl = document.getElementById("add-vocab-feedback");
 
     if (parsedWords.length === 0) {
-      alert("Please enter or paste at least one vocabulary word.");
+      if (feedbackEl) {
+        feedbackEl.style.display = "block";
+        feedbackEl.style.background = "rgba(239, 68, 68, 0.15)";
+        feedbackEl.style.color = "#ef4444";
+        feedbackEl.style.border = "1px solid rgba(239, 68, 68, 0.3)";
+        feedbackEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Please enter or paste at least one valid vocabulary word.';
+      } else {
+        alert("Please enter at least one valid vocabulary word.");
+      }
       return;
     }
 
     const saveBtn = document.getElementById("save-vocab-cards-btn");
-    const origHTML = saveBtn.innerHTML;
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Fetching Definitions...';
+    const origHTML = saveBtn ? saveBtn.innerHTML : 'Generate & Save Flashcards';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Fetching Definitions...';
+    }
+
+    if (feedbackEl) {
+      feedbackEl.style.display = "block";
+      feedbackEl.style.background = "rgba(99, 102, 241, 0.15)";
+      feedbackEl.style.color = "var(--accent-primary)";
+      feedbackEl.style.border = "1px solid rgba(99, 102, 241, 0.3)";
+      feedbackEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing ${parsedWords.length} word(s)...`;
+    }
 
     let addedCount = 0;
-    let skippedCount = 0;
+    let updatedCount = 0;
 
     try {
       const currentDateStr = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-      for (const word of parsedWords) {
+      
+      const fetchTasks = parsedWords.map(async (word) => {
         const upperWord = word.toUpperCase();
-        // Check deduplication
-        if (this.customVocabCards.some(v => v.word.toUpperCase() === upperWord)) {
-          skippedCount++;
-          continue;
-        }
-
         let mwRes = null;
         try {
           mwRes = await qGen.fetchMWDefinition(word);
@@ -824,38 +1363,94 @@ class SSATApp {
           };
         }
 
-        this.customVocabCards.push({
+        return {
           word: upperWord,
           definition: mwRes.definition,
           pos: mwRes.pos || 'Vocabulary',
           phonetic: mwRes.phonetic || '',
-          synonyms: mwRes.synonyms || [],
-          dateAdded: currentDateStr,
-          status: 'uncategorized'
-        });
-        addedCount++;
+          synonyms: mwRes.synonyms || []
+        };
+      });
+
+      const fetchedCards = await Promise.all(fetchTasks);
+      for (const resCard of fetchedCards) {
+        const existingIndex = this.customVocabCards.findIndex(v => v.word.toUpperCase() === resCard.word);
+        if (existingIndex !== -1) {
+          const existing = this.customVocabCards[existingIndex];
+          if (resCard.definition && !resCard.definition.includes("(SSAT Vocabulary Word)")) {
+            existing.definition = resCard.definition;
+          }
+          if (resCard.pos && resCard.pos !== 'Vocabulary') existing.pos = resCard.pos;
+          if (resCard.phonetic) existing.phonetic = resCard.phonetic;
+          if (resCard.synonyms && resCard.synonyms.length > 0) existing.synonyms = resCard.synonyms;
+          updatedCount++;
+        } else {
+          this.customVocabCards.push({
+            word: resCard.word,
+            definition: resCard.definition,
+            pos: resCard.pos,
+            phonetic: resCard.phonetic,
+            synonyms: resCard.synonyms,
+            dateAdded: currentDateStr,
+            status: 'uncategorized'
+          });
+          addedCount++;
+        }
       }
 
       await this.saveCustomVocabCards();
+      const csvSaved = await this.syncCSVFile(true);
+      
+      // Reset search filter input if populated so new cards are immediately visible
+      const searchInput = document.getElementById("vocab-search-input");
+      if (searchInput) searchInput.value = "";
+      this.activeStatusFilter = "all";
+      document.querySelectorAll(".filter-chip").forEach(c => {
+        if (c.dataset.statusFilter === "all") c.classList.add("active");
+        else c.classList.remove("active");
+      });
+
       this.renderVocabCards();
       this.renderDailyVocabCards();
 
-      document.getElementById("vocab-words-input").value = "";
-      document.getElementById("add-vocab-panel").style.display = "none";
+      const inputArea = document.getElementById("vocab-words-input");
+      if (inputArea) inputArea.value = "";
 
-      if (addedCount > 0) {
-        let msg = `Successfully added ${addedCount} new vocabulary card(s)!`;
-        if (skippedCount > 0) msg += ` Skipped ${skippedCount} duplicate word(s).`;
-        alert(msg);
-      } else if (skippedCount > 0) {
-        alert(`All ${skippedCount} word(s) already exist in your Vocab Bank.`);
+      let successMsg = "";
+      if (addedCount > 0) successMsg += `Successfully added ${addedCount} new card(s)! `;
+      if (updatedCount > 0) successMsg += `Updated ${updatedCount} existing card(s). `;
+      if (csvSaved) successMsg += `Updated CSV file saved!`;
+
+      if (feedbackEl) {
+        feedbackEl.style.display = "block";
+        feedbackEl.style.background = "rgba(34, 197, 94, 0.15)";
+        feedbackEl.style.color = "#22c55e";
+        feedbackEl.style.border = "1px solid rgba(34, 197, 94, 0.3)";
+        feedbackEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${successMsg.trim()}`;
       }
+
+      setTimeout(() => {
+        const panel = document.getElementById("add-vocab-panel");
+        if (panel) panel.style.display = "none";
+        if (feedbackEl) feedbackEl.style.display = "none";
+      }, 1200);
+
     } catch (e) {
       console.error("Error adding vocabulary words:", e);
-      alert("An error occurred while adding vocabulary. Please try again.");
+      if (feedbackEl) {
+        feedbackEl.style.display = "block";
+        feedbackEl.style.background = "rgba(239, 68, 68, 0.15)";
+        feedbackEl.style.color = "#ef4444";
+        feedbackEl.style.border = "1px solid rgba(239, 68, 68, 0.3)";
+        feedbackEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Error adding words: ${e.message || 'Please try again.'}`;
+      } else {
+        alert("An error occurred while adding vocabulary: " + (e.message || 'Please try again.'));
+      }
     } finally {
-      saveBtn.disabled = false;
-      saveBtn.innerHTML = origHTML;
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = origHTML;
+      }
     }
   }
 
@@ -961,11 +1556,16 @@ class SSATApp {
     if (!grid) return;
     grid.innerHTML = "";
 
-    // Update filter counts
+    // Update breakdown bar counts and percentage bars
     const countAllEl = document.getElementById("count-filter-all");
+    const countAllChipEl = document.getElementById("count-filter-all-chip");
     const countLearningEl = document.getElementById("count-filter-learning");
     const countUncatEl = document.getElementById("count-filter-uncategorized");
     const countMasteredEl = document.getElementById("count-filter-mastered");
+
+    const barUncatEl = document.getElementById("bar-uncategorized");
+    const barLearningEl = document.getElementById("bar-learning");
+    const barMasteredEl = document.getElementById("bar-mastered");
 
     const totalAll = this.customVocabCards.length;
     const totalLearning = this.customVocabCards.filter(v => v.status === 'learning').length;
@@ -973,9 +1573,20 @@ class SSATApp {
     const totalMastered = this.customVocabCards.filter(v => v.status === 'mastered').length;
 
     if (countAllEl) countAllEl.textContent = totalAll;
+    if (countAllChipEl) countAllChipEl.textContent = totalAll;
     if (countLearningEl) countLearningEl.textContent = totalLearning;
     if (countUncatEl) countUncatEl.textContent = totalUncat;
     if (countMasteredEl) countMasteredEl.textContent = totalMastered;
+
+    if (totalAll > 0) {
+      if (barUncatEl) barUncatEl.style.width = `${(totalUncat / totalAll) * 100}%`;
+      if (barLearningEl) barLearningEl.style.width = `${(totalLearning / totalAll) * 100}%`;
+      if (barMasteredEl) barMasteredEl.style.width = `${(totalMastered / totalAll) * 100}%`;
+    } else {
+      if (barUncatEl) barUncatEl.style.width = '0%';
+      if (barLearningEl) barLearningEl.style.width = '0%';
+      if (barMasteredEl) barMasteredEl.style.width = '0%';
+    }
 
     const query = filterQuery.toLowerCase().trim();
     const list = this.customVocabCards.filter(v => {
@@ -986,6 +1597,21 @@ class SSATApp {
       if (this.activeStatusFilter === "mastered") return v.status === "mastered";
       if (this.activeStatusFilter === "uncategorized") return !v.status || v.status === "uncategorized";
       return true;
+    });
+
+    // Sort cards: 1. Don't Know (learning), 2. Uncategorized, 3. Know (mastered)
+    const getStatusRank = (status) => {
+      if (status === 'learning') return 1;
+      if (!status || status === 'uncategorized') return 2;
+      if (status === 'mastered') return 3;
+      return 2;
+    };
+
+    list.sort((a, b) => {
+      const rankA = getStatusRank(a.status);
+      const rankB = getStatusRank(b.status);
+      if (rankA !== rankB) return rankA - rankB;
+      return a.word.localeCompare(b.word);
     });
 
     if (list.length === 0) {
@@ -1003,65 +1629,194 @@ class SSATApp {
       const card = document.createElement("div");
       card.className = "flashcard";
       
-      const synTags = (v.synonyms || []).map(s => `<span class="syn-tag">${s}</span>`).join("");
-      const phoneticText = v.phonetic ? `<div class="card-phonetic">${v.phonetic}</div>` : "";
-      const dateText = v.dateAdded || new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-
-      let statusBadgeHTML = '';
-      if (v.status === 'mastered') {
-        statusBadgeHTML = `<span class="status-badge badge-mastered"><i class="fa-solid fa-check"></i> Know</span>`;
-      } else if (v.status === 'learning') {
-        statusBadgeHTML = `<span class="status-badge badge-learning"><i class="fa-solid fa-xmark"></i> Don't Know</span>`;
+      let synTagsHTML = '';
+      if (v.synonyms && v.synonyms.length > 0) {
+        synTagsHTML = v.synonyms.map(s => `<span class="syn-tag">${s}</span>`).join(" ");
       } else {
-        statusBadgeHTML = `<span class="status-badge badge-uncategorized"><i class="fa-solid fa-question"></i> Uncategorized</span>`;
+        synTagsHTML = `<span class="syn-tag placeholder-syn" style="opacity: 0.6; font-style: italic; background: transparent; border: 1px dashed var(--border-color); color: var(--text-secondary); cursor: pointer;"><i class="fa-solid fa-plus"></i> Add Synonyms</span>`;
       }
 
-      card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-          <div style="display:flex; gap:0.5rem; align-items:center;">
-            <span class="card-pos" style="margin-bottom: 0;">${v.pos || 'Word'}</span>
-            ${statusBadgeHTML}
+      let antTagsHTML = '';
+      if (v.antonyms && v.antonyms.length > 0) {
+        antTagsHTML = `<div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.3rem;"><strong>Antonyms:</strong> ${v.antonyms.map(a => `<span class="syn-tag" style="background: rgba(239, 68, 68, 0.12); color: #f87171; border-color: rgba(239, 68, 68, 0.3);">${a}</span>`).join(" ")}</div>`;
+      }
+
+      let exampleHTML = '';
+      if (v.example) {
+        exampleHTML = `<div style="font-size: 0.82rem; font-style: italic; color: var(--text-secondary); margin-top: 0.35rem; padding-left: 0.5rem; border-left: 2px solid var(--accent-primary);">"${v.example}"</div>`;
+      }
+
+      const phoneticText = v.phonetic ? `<div class="card-phonetic" title="Double click or click pen icon to edit">${v.phonetic}</div>` : "";
+      const dateText = v.dateAdded || new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+      const currentStatus = v.status || 'uncategorized';
+
+      const renderNormalMode = () => {
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+              <span class="card-pos" style="margin-bottom: 0;" title="Double click or click pen icon to edit">${v.pos || 'Word'}</span>
+              <select class="status-select-dropdown badge-${currentStatus === 'mastered' ? 'mastered' : (currentStatus === 'learning' ? 'learning' : 'uncategorized')}" title="Change status group">
+                <option value="learning" ${currentStatus === 'learning' ? 'selected' : ''}>❌ Don't Know</option>
+                <option value="uncategorized" ${currentStatus === 'uncategorized' ? 'selected' : ''}>❓ Uncategorized</option>
+                <option value="mastered" ${currentStatus === 'mastered' ? 'selected' : ''}>✅ Know</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:0.25rem;">
+              <button class="edit-card-btn" title="Edit Card Details"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button class="delete-card-btn" title="Delete Card"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
           </div>
-          <button class="delete-card-btn" title="Delete Card"><i class="fa-solid fa-trash-can"></i></button>
-        </div>
-        <div class="card-word">
-          <span>${v.word}</span>
-          <button class="audio-btn" title="Listen Pronunciation"><i class="fa-solid fa-volume-high"></i></button>
-        </div>
-        ${phoneticText}
-        <div class="card-def">${v.definition}</div>
-        ${synTags ? `<div class="card-syns">${synTags}</div>` : ''}
+          <div class="card-word" title="Double click or click pen icon to edit">
+            <span>${v.word}</span>
+            <button class="audio-btn" title="Listen Pronunciation"><i class="fa-solid fa-volume-high"></i></button>
+          </div>
+          ${phoneticText}
+          <div class="card-def" title="Double click or click pen icon to edit">${v.definition}</div>
+          <div class="card-syns" title="Double click or click pen icon to edit">${synTagsHTML}</div>
+          ${antTagsHTML}
+          ${exampleHTML}
 
-        <div class="card-status-actions" style="margin-top:0.75rem; border-top:1px dashed var(--border-color); padding-top:0.6rem;">
-          <button class="status-btn btn-dont-know ${v.status === 'learning' ? 'active' : ''}" data-word="${v.word}" data-status="learning">
-            <i class="fa-solid fa-circle-xmark"></i> Don't Know
-          </button>
-          <button class="status-btn btn-know ${v.status === 'mastered' ? 'active' : ''}" data-word="${v.word}" data-status="mastered">
-            <i class="fa-solid fa-circle-check"></i> Know
-          </button>
-        </div>
+          <div class="card-footer-date"><i class="fa-regular fa-calendar-days"></i> Added: ${dateText}</div>
+        `;
 
-        <div class="card-footer-date"><i class="fa-regular fa-calendar-days"></i> Added: ${dateText}</div>
-      `;
+        const statusSelectEl = card.querySelector(".status-select-dropdown");
+        if (statusSelectEl) {
+          statusSelectEl.addEventListener("change", (e) => {
+            e.stopPropagation();
+            this.setCardStatus(v.word, e.target.value);
+          });
+          statusSelectEl.addEventListener("click", (e) => {
+            e.stopPropagation();
+          });
+        }
 
-      card.querySelector(".audio-btn").addEventListener("click", (e) => {
-        e.stopPropagation();
-        this.speakWord(v.word);
-      });
+        const editBtn = card.querySelector(".edit-card-btn");
+        if (editBtn) {
+          editBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            renderEditMode();
+          });
+        }
 
-      card.querySelector(".delete-card-btn").addEventListener("click", (e) => {
-        e.stopPropagation();
-        this.deleteSingleVocabCard(v.word);
-      });
+        const audioBtn = card.querySelector(".audio-btn");
+        if (audioBtn) {
+          audioBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.speakWord(v.word);
+          });
+        }
 
-      card.querySelectorAll(".status-btn").forEach(btn => {
-        btn.addEventListener("click", (e) => {
+        const deleteBtn = card.querySelector(".delete-card-btn");
+        if (deleteBtn) {
+          deleteBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.deleteSingleVocabCard(v.word);
+          });
+        }
+      };
+
+      const renderEditMode = () => {
+        card.innerHTML = `
+          <div class="edit-flashcard-form" style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
+              <strong style="font-size: 0.85rem; color: var(--accent-primary);"><i class="fa-solid fa-pen-to-square"></i> Edit Vocabulary Card</strong>
+            </div>
+
+            <div>
+              <label style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.1rem;">Word</label>
+              <input type="text" class="edit-word-input form-input" value="${v.word}" style="font-weight: 700; font-size: 0.95rem; padding: 0.25rem 0.5rem; width: 100%;" />
+            </div>
+
+            <div style="display: flex; gap: 0.5rem;">
+              <div style="flex: 1;">
+                <label style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.1rem;">Part of Speech</label>
+                <input type="text" class="edit-pos-input form-input" value="${v.pos || ''}" placeholder="e.g. Noun, Adjective" style="padding: 0.25rem 0.5rem; font-size: 0.82rem; width: 100%;" />
+              </div>
+              <div style="flex: 1;">
+                <label style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.1rem;">Pronunciation</label>
+                <input type="text" class="edit-phonetic-input form-input" value="${v.phonetic || ''}" placeholder="e.g. ˈplī-ə-bəl" style="padding: 0.25rem 0.5rem; font-size: 0.82rem; width: 100%;" />
+              </div>
+            </div>
+
+            <div>
+              <label style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.1rem;">Status Group</label>
+              <select class="edit-status-input form-select" style="padding: 0.25rem 0.5rem; font-size: 0.82rem; width: 100%;">
+                <option value="learning" ${currentStatus === 'learning' ? 'selected' : ''}>❌ Don't Know</option>
+                <option value="uncategorized" ${currentStatus === 'uncategorized' ? 'selected' : ''}>❓ Uncategorized</option>
+                <option value="mastered" ${currentStatus === 'mastered' ? 'selected' : ''}>✅ Know</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.1rem;">Definition</label>
+              <textarea class="edit-def-input form-textarea" rows="2" style="font-size: 0.82rem; padding: 0.35rem 0.5rem; width: 100%; resize: vertical;">${v.definition}</textarea>
+            </div>
+
+            <div>
+              <label style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.1rem;">Synonyms (separated by semicolons)</label>
+              <input type="text" class="edit-syns-input form-input" value="${(v.synonyms || []).join('; ')}" placeholder="e.g. flexible; supple; adaptable" style="padding: 0.25rem 0.5rem; font-size: 0.82rem; width: 100%;" />
+            </div>
+
+            <div>
+              <label style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.1rem;">Antonyms (separated by semicolons)</label>
+              <input type="text" class="edit-ants-input form-input" value="${(v.antonyms || []).join('; ')}" placeholder="e.g. rigid; stubborn" style="padding: 0.25rem 0.5rem; font-size: 0.82rem; width: 100%;" />
+            </div>
+
+            <div>
+              <label style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.1rem;">Example Sentence</label>
+              <input type="text" class="edit-example-input form-input" value="${v.example || ''}" placeholder="e.g. The pliable material was easily shaped." style="padding: 0.25rem 0.5rem; font-size: 0.82rem; width: 100%;" />
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.3rem;">
+              <button class="save-edit-btn btn-primary" style="padding: 0.3rem 0.75rem; font-size: 0.8rem; width: auto;"><i class="fa-solid fa-check"></i> Save</button>
+              <button class="cancel-edit-btn btn-secondary" style="padding: 0.3rem 0.75rem; font-size: 0.8rem; width: auto;">Cancel</button>
+            </div>
+          </div>
+        `;
+
+        card.querySelector(".save-edit-btn").addEventListener("click", (e) => {
           e.stopPropagation();
-          const targetStatus = btn.dataset.status;
-          this.setCardStatus(v.word, targetStatus);
+          const newWord = card.querySelector(".edit-word-input").value.trim().toUpperCase();
+          const newPos = card.querySelector(".edit-pos-input").value.trim();
+          const newPhonetic = card.querySelector(".edit-phonetic-input").value.trim();
+          const newDef = card.querySelector(".edit-def-input").value.trim();
+          const rawSyns = card.querySelector(".edit-syns-input").value;
+          const newSyns = rawSyns.split(/[;,]/).map(s => s.trim()).filter(Boolean);
+          const rawAnts = card.querySelector(".edit-ants-input").value;
+          const newAnts = rawAnts.split(/[;,]/).map(s => s.trim()).filter(Boolean);
+          const newExample = card.querySelector(".edit-example-input").value.trim();
+          const newStatus = card.querySelector(".edit-status-input").value;
+
+          if (!newWord || !newDef) {
+            alert("Word and Definition cannot be empty.");
+            return;
+          }
+
+          this.updateVocabCard(v.word, {
+            word: newWord,
+            pos: newPos || 'Word',
+            phonetic: newPhonetic,
+            definition: newDef,
+            synonyms: newSyns,
+            antonyms: newAnts,
+            example: newExample,
+            status: newStatus
+          });
         });
+
+        card.querySelector(".cancel-edit-btn").addEventListener("click", (e) => {
+          e.stopPropagation();
+          renderNormalMode();
+        });
+      };
+
+      card.addEventListener("dblclick", (e) => {
+        if (e.target.closest(".status-select-dropdown") || e.target.closest(".status-badge") || e.target.closest(".audio-btn") || e.target.closest(".delete-card-btn") || e.target.closest(".edit-card-btn") || e.target.closest("input") || e.target.closest("textarea") || e.target.closest("select")) return;
+        renderEditMode();
       });
 
+      renderNormalMode();
       grid.appendChild(card);
     });
   }
@@ -1145,9 +1900,18 @@ class SSATApp {
 
     const todayStr = this.getTodayDateString();
     const savedState = this.loadDailyState();
+    let validSavedDeck = [];
+    if (savedState && Array.isArray(savedState.cards)) {
+      savedState.cards.forEach(savedCard => {
+        const liveCard = sourcePool.find(v => v.word.toUpperCase() === savedCard.word.toUpperCase());
+        if (liveCard) {
+          validSavedDeck.push(liveCard);
+        }
+      });
+    }
 
-    if (savedState) {
-      this.dailyDeck = savedState.cards;
+    if (validSavedDeck.length > 0) {
+      this.dailyDeck = validSavedDeck;
       this.dailyIndex = Math.min(savedState.currentIndex || 0, this.dailyDeck.length - 1);
     } else {
       // 1. Filter pools: Don't Know (learning), Uncategorized, and Know (mastered)
@@ -1203,7 +1967,7 @@ class SSATApp {
     this.displayCurrentDailyCard();
   }
 
-  displayCurrentDailyCard() {
+  displayCurrentDailyCard(startFlipped = false) {
     const container = document.getElementById("daily-single-card-container");
     const progressText = document.getElementById("daily-card-progress-text");
     const progressFill = document.getElementById("daily-card-progress-fill");
@@ -1227,7 +1991,7 @@ class SSATApp {
     const dateText = v.dateAdded || new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
     container.innerHTML = `
-      <div class="flip-card" style="height: 270px;">
+      <div class="flip-card ${startFlipped ? 'flipped' : ''}" style="height: 270px;">
         <div class="flip-card-inner">
           <!-- FRONT SIDE (Word only + Audio + Flip Hint) -->
           <div class="flip-card-front">
@@ -1297,7 +2061,20 @@ class SSATApp {
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
           const targetStatus = btn.dataset.status;
-          this.setCardStatus(v.word, targetStatus);
+
+          // Immediate visual feedback on back of current card
+          card.querySelectorAll(".status-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+
+          // Save card status & keep card flipped
+          this.setCardStatus(v.word, targetStatus, true);
+
+          // Smoothly advance to next card after short delay
+          if (this.dailyIndex < this.dailyDeck.length - 1) {
+            setTimeout(() => {
+              this.nextDailyCard();
+            }, 400);
+          }
         });
       });
     }
@@ -1390,7 +2167,11 @@ class SSATApp {
   }
 }
 
-// Initialize Application on DOM Ready
-document.addEventListener("DOMContentLoaded", () => {
-  window.app = new SSATApp();
-});
+// Initialize Application on DOM Ready or Immediately if DOM is ready
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!window.app) window.app = new SSATApp();
+  });
+} else {
+  if (!window.app) window.app = new SSATApp();
+}
